@@ -2,7 +2,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, useCallback, useMemo } from 'react';
 import { 
-  db, 
+  enhancedDB, 
   galleryManager, 
   collectionManager, 
   type IGalleryItem, 
@@ -107,6 +107,7 @@ export const useEnhancedGallery = () => {
         url: imageUrl,
         prompt: params.prompt,
         negativePrompt: params.negativePrompt,
+        style: params.style,
         parameters: {
           style: params.style,
           steps: params.steps,
@@ -169,7 +170,7 @@ export const useEnhancedGallery = () => {
   const toggleFavorite = useCallback(async (id: string) => {
     try {
       await galleryManager.toggleFavorite(id);
-      const image = await db.gallery_items.get(id);
+      const image = await enhancedDB.gallery_items.get(id);
       toast({
         title: image?.metadata.isFavorite ? '❤️ Added to Favorites' : '💔 Removed from Favorites',
         description: 'Your preference has been saved',

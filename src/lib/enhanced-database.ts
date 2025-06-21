@@ -179,7 +179,6 @@ export const galleryManager = {
     if (image) {
       await enhancedDB.gallery_items.update(id, {
         'metadata.isFavorite': !image.metadata.isFavorite,
-        updatedAt: new Date(),
       });
     }
   },
@@ -187,7 +186,6 @@ export const galleryManager = {
   async rateImage(id: string, rating: number): Promise<void> {
     await enhancedDB.gallery_items.update(id, {
       'metadata.rating': rating,
-      updatedAt: new Date(),
     });
   },
 
@@ -199,7 +197,6 @@ export const galleryManager = {
         collections.push(collectionId);
         await enhancedDB.gallery_items.update(imageId, {
           'metadata.collections': collections,
-          updatedAt: new Date(),
         });
       }
     }
@@ -211,7 +208,6 @@ export const galleryManager = {
       const collections = (image.metadata.collections || []).filter(id => id !== collectionId);
       await enhancedDB.gallery_items.update(imageId, {
         'metadata.collections': collections,
-        updatedAt: new Date(),
       });
     }
   },

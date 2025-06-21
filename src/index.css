@@ -332,15 +332,18 @@
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .glass {
-    @apply bg-black/90 border-white/90;
+    background: rgba(0, 0, 0, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.9) !important;
   }
   
   .glass-strong {
-    @apply bg-black/95 border-white/95;
+    background: rgba(0, 0, 0, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.95) !important;
   }
 
   .glass-immersive {
-    @apply bg-black/98 border-white/98;
+    background: rgba(0, 0, 0, 0.98) !important;
+    border: 1px solid rgba(255, 255, 255, 0.98) !important;
   }
   
   .text-gradient,
