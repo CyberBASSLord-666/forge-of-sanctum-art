@@ -59,11 +59,12 @@
   body {
     @apply bg-background text-foreground font-sans;
     font-feature-settings: 'rlig' 1, 'calt' 1;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
   }
 
-  /* Custom scrollbar for webkit browsers */
+  /* Enhanced scrollbar for webkit browsers */
   ::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
 
   ::-webkit-scrollbar-track {
@@ -71,16 +72,26 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-white/20 rounded-full;
+    @apply bg-purple-500/20 rounded-full;
+    transition: background-color 0.2s ease;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-white/30;
+    @apply bg-purple-500/40;
+  }
+
+  /* Enhanced selection styling */
+  ::selection {
+    @apply bg-purple-500/30 text-purple-100;
+  }
+
+  ::-moz-selection {
+    @apply bg-purple-500/30 text-purple-100;
   }
 }
 
 @layer components {
-  /* Liquid glass effect */
+  /* Enhanced liquid glass effects */
   .glass {
     @apply backdrop-blur-xl bg-white/5 border border-white/10;
   }
@@ -89,7 +100,11 @@
     @apply backdrop-blur-2xl bg-white/10 border border-white/20;
   }
 
-  /* Forge animation shimmer effect */
+  .glass-immersive {
+    @apply backdrop-blur-3xl bg-white/15 border border-white/30;
+  }
+
+  /* Enhanced forge animation effects */
   .forge-shimmer::before {
     content: '';
     position: absolute;
@@ -106,19 +121,40 @@
     animation: shimmer 2s infinite;
   }
 
-  /* Custom focus styles */
+  /* Enhanced focus styles with glow */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-transparent;
+    transition: all 0.2s ease;
   }
 
-  /* Text selection styling */
-  ::selection {
-    @apply bg-purple-500/30;
+  .focus-ring:focus {
+    box-shadow: 
+      0 0 0 2px rgba(139, 92, 246, 0.5),
+      0 0 20px rgba(139, 92, 246, 0.3);
+  }
+
+  /* Interactive hover effects */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+  }
+
+  /* Immersive glow effects */
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  }
+
+  .glow-blue {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
   }
 }
 
 @layer utilities {
-  /* Text gradient utilities */
+  /* Enhanced text gradient utilities */
   .text-gradient {
     @apply bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent;
   }
@@ -127,17 +163,39 @@
     @apply bg-gradient-to-r from-purple-300 via-blue-300 to-purple-300 bg-clip-text text-transparent;
   }
 
-  /* Animation utilities */
+  .text-gradient-ethereal {
+    @apply bg-gradient-to-r from-purple-200 via-pink-300 to-blue-200 bg-clip-text text-transparent;
+  }
+
+  /* Enhanced animation utilities */
   .animate-float {
     animation: float 3s ease-in-out infinite;
   }
 
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+  .animate-pulse-slow {
+    animation: pulse 3s ease-in-out infinite;
   }
 
-  /* Line clamp utilities */
+  .animate-bounce-subtle {
+    animation: bounceSubtle 2s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  .animate-aurora {
+    animation: aurora 20s ease-in-out infinite;
+  }
+
+  /* Transform utilities */
+  .transform-gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Enhanced line clamp utilities */
   .line-clamp-1 {
     overflow: hidden;
     display: -webkit-box;
@@ -158,9 +216,101 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
   }
+
+  /* Interactive states */
+  .interactive {
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .interactive:hover {
+    transform: translateY(-1px);
+  }
+
+  .interactive:active {
+    transform: translateY(0);
+  }
 }
 
-/* Additional accessibility improvements */
+/* Enhanced keyframe animations */
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-10px); 
+  }
+}
+
+@keyframes bounceSubtle {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-5px); 
+  }
+}
+
+@keyframes shimmer {
+  0% { 
+    transform: translateX(-100%) translateY(-100%) rotate(45deg); 
+  }
+  100% { 
+    transform: translateX(200%) translateY(200%) rotate(45deg); 
+  }
+}
+
+@keyframes aurora {
+  0%, 100% {
+    transform: translateX(-50%) translateY(-50%) rotate(0deg);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateX(-30%) translateY(-60%) rotate(90deg);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateX(-70%) translateY(-40%) rotate(180deg);
+    opacity: 0.4;
+  }
+  75% {
+    transform: translateX(-40%) translateY(-70%) rotate(270deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+@keyframes particle {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-200px) scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(139, 92, 246, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
+  }
+}
+
+/* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -168,16 +318,84 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-aurora,
+  .animate-shimmer,
+  .animate-float,
+  .animate-bounce-subtle {
+    animation: none !important;
   }
 }
 
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .glass {
-    @apply bg-black/80 border-white/80;
+    @apply bg-black/90 border-white/90;
   }
   
   .glass-strong {
-    @apply bg-black/90 border-white/90;
+    @apply bg-black/95 border-white/95;
+  }
+
+  .glass-immersive {
+    @apply bg-black/98 border-white/98;
+  }
+  
+  .text-gradient,
+  .text-gradient-mystic,
+  .text-gradient-ethereal {
+    @apply text-white bg-none;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* Print styles */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .glass,
+  .glass-strong,
+  .glass-immersive {
+    background: white !important;
+    border: 1px solid black !important;
+    backdrop-filter: none !important;
+  }
+}
+
+/* Enhanced focus visible for better accessibility */
+.focus-visible {
+  outline: 2px solid rgba(139, 92, 246, 0.8);
+  outline-offset: 2px;
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .hover-lift:hover {
+    transform: none;
+  }
+  
+  .interactive:hover {
+    transform: none;
+  }
+  
+  /* Larger touch targets */
+  button, .interactive {
+    min-height: 44px;
+    min-width: 44px;
   }
 }
