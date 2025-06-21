@@ -53,12 +53,21 @@ export interface PhysicsConfig {
   };
 }
 
+// Core animation interface for all custom animations
+export interface IMuseAnimation {
+  start(): void;
+  stop(): void;
+  pause?(): void;
+  resume?(): void;
+  isActive: boolean;
+}
+
 class MotionEngine {
   private animationFrame: number | null = null;
   private startTime: number | null = null;
-  private activeAnimations: Map<string, Animation> = new Map();
-  private springAnimations: Map<string, SpringAnimation> = new Map();
-  private physicsObjects: Map<string, PhysicsObject> = new Map();
+  private activeAnimations: Map<string, IMuseAnimation> = new Map();
+  private springAnimations: Map<string, MuseSpringAnimation> = new Map();
+  private physicsObjects: Map<string, MusePhysicsObject> = new Map();
   
   // High-performance easing functions
   private readonly easingFunctions = {
@@ -101,7 +110,7 @@ class MotionEngine {
     config: SpringConfig
   ): string {
     const id = this.generateId();
-    const spring = new SpringAnimation(element, target, config);
+    const spring = new MuseSpringAnimation(element, target, config);
     this.springAnimations.set(id, spring);
     spring.start();
     return id;
@@ -113,7 +122,7 @@ class MotionEngine {
     config: PhysicsConfig
   ): string {
     const id = this.generateId();
-    const physics = new PhysicsObject(element, initialVelocity, config);
+    const physics = new MusePhysicsObject(element, initialVelocity, config);
     this.physicsObjects.set(id, physics);
     physics.start();
     return id;
@@ -147,7 +156,7 @@ class MotionEngine {
     return new Promise((resolve, reject) => {
       const id = this.generateId();
       const startTransform = this.getCurrentTransform(element);
-      const animation = new AdvancedAnimation(
+      const animation = new MuseAnimation(
         element,
         startTransform,
         targetTransform,
@@ -169,7 +178,7 @@ class MotionEngine {
   ): Promise<void> {
     return new Promise((resolve, reject) => {
       const id = this.generateId();
-      const morphAnimation = new MorphingAnimation(
+      const morphAnimation = new MuseKeyframeAnimation(
         element,
         keyframes,
         config,
@@ -318,10 +327,10 @@ class MotionEngine {
   }
 }
 
-class AdvancedAnimation {
+class MuseAnimation implements IMuseAnimation {
   private startTime: number | null = null;
   private rafId: number | null = null;
-  private isActive = false;
+  public isActive = false;
 
   constructor(
     private element: HTMLElement,
@@ -372,7 +381,7 @@ class AdvancedAnimation {
     }
   };
 
-  private updateTransform(progress: number): void {
+  protected updateTransform(progress: number): void {
     const currentTransform: Transform3D = {};
 
     Object.keys(this.targetTransform).forEach(key => {
@@ -385,7 +394,7 @@ class AdvancedAnimation {
     this.applyTransform(currentTransform);
   }
 
-  private applyTransform(transform: Transform3D): void {
+  protected applyTransform(transform: Transform3D): void {
     const transformString = this.buildTransformString(transform);
     this.element.style.transform = transformString;
     
@@ -395,7 +404,7 @@ class AdvancedAnimation {
     this.element.style.perspective = '1000px';
   }
 
-  private buildTransformString(transform: Transform3D): string {
+  protected buildTransformString(transform: Transform3D): string {
     const parts: string[] = [];
 
     if (transform.perspective) parts.push(`perspective(${transform.perspective}px)`);
@@ -421,9 +430,9 @@ class AdvancedAnimation {
   }
 }
 
-class SpringAnimation {
+class MuseSpringAnimation implements IMuseAnimation {
   private rafId: number | null = null;
-  private isActive = false;
+  public isActive = false;
   private currentTransform: Transform3D;
   private velocity: Record<keyof Transform3D, number> = {} as any;
 
@@ -486,7 +495,25 @@ class SpringAnimation {
 
   private getCurrentTransform(): Transform3D {
     const computedStyle = getComputedStyle(this.element);
-    // Implementation similar to MotionEngine.getCurrentTransform
+    const transform = computedStyle.transform;
+    
+    if (transform === 'none') {
+      return {
+        translateX: 0,
+        translateY: 0,
+        translateZ: 0,
+        rotateX: 0,
+        rotateY: 0,
+        rotateZ: 0,
+        scaleX: 1,
+        scaleY: 1,
+        scaleZ: 1,
+        skewX: 0,
+        skewY: 0,
+      };
+    }
+    
+    // Simplified transform parsing for spring animations
     return {
       translateX: 0,
       translateY: 0,
@@ -514,12 +541,26 @@ class SpringAnimation {
   }
 
   private buildTransformString(): string {
-    // Implementation similar to AdvancedAnimation.buildTransformString
-    return '';
+    const parts: string[] = [];
+
+    if (this.currentTransform.perspective) parts.push(`perspective(${this.currentTransform.perspective}px)`);
+    if (this.currentTransform.translateX !== undefined) parts.push(`translateX(${this.currentTransform.translateX}px)`);
+    if (this.currentTransform.translateY !== undefined) parts.push(`translateY(${this.currentTransform.translateY}px)`);
+    if (this.currentTransform.translateZ !== undefined) parts.push(`translateZ(${this.currentTransform.translateZ}px)`);
+    if (this.currentTransform.rotateX !== undefined) parts.push(`rotateX(${this.currentTransform.rotateX}deg)`);
+    if (this.currentTransform.rotateY !== undefined) parts.push(`rotateY(${this.currentTransform.rotateY}deg)`);
+    if (this.currentTransform.rotateZ !== undefined) parts.push(`rotateZ(${this.currentTransform.rotateZ}deg)`);
+    if (this.currentTransform.scaleX !== undefined) parts.push(`scaleX(${this.currentTransform.scaleX})`);
+    if (this.currentTransform.scaleY !== undefined) parts.push(`scaleY(${this.currentTransform.scaleY})`);
+    if (this.currentTransform.scaleZ !== undefined) parts.push(`scaleZ(${this.currentTransform.scaleZ})`);
+    if (this.currentTransform.skewX !== undefined) parts.push(`skewX(${this.currentTransform.skewX}deg)`);
+    if (this.currentTransform.skewY !== undefined) parts.push(`skewY(${this.currentTransform.skewY}deg)`);
+
+    return parts.join(' ');
   }
 }
 
-class MorphingAnimation extends AdvancedAnimation {
+class MuseKeyframeAnimation extends MuseAnimation {
   constructor(
     element: HTMLElement,
     private keyframes: Transform3D[],
@@ -557,9 +598,9 @@ class MorphingAnimation extends AdvancedAnimation {
   }
 }
 
-class PhysicsObject {
+class MusePhysicsObject implements IMuseAnimation {
   private rafId: number | null = null;
-  private isActive = false;
+  public isActive = false;
   private position: { x: number; y: number };
   private velocity: { x: number; y: number };
 
