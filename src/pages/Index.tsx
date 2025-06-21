@@ -11,6 +11,9 @@ import { EnhancedLiquidGlass } from '@/components/ui/enhanced-liquid-glass';
 import { useViewport, useResponsiveValue } from '@/lib/responsive/viewport-system';
 import { useMotionEngine } from '@/lib/animation/motion-engine';
 import { useGestures } from '@/lib/interaction/gesture-system';
+import { animationFactory } from '@/lib/animation/animation-factory';
+import { performanceMonitor } from '@/lib/animation/performance-monitor';
+import { GestureStateMachine } from '@/lib/interaction/gesture-state-machine';
 import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
@@ -19,9 +22,10 @@ const Index = () => {
   const leftPanelRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   
-  // Advanced responsive system
+  // Enhanced systems
   const viewport = useViewport();
   const motionEngine = useMotionEngine();
+  const gestureStateMachine = useMemo(() => new GestureStateMachine(), []);
   
   // Enhanced hooks
   const { 
@@ -46,7 +50,33 @@ const Index = () => {
     addRecentPrompt,
   } = useEnhancedSession();
 
-  // Responsive layout configuration
+  // Performance monitoring
+  useEffect(() => {
+    performanceMonitor.startMonitoring();
+    
+    const unsubscribe = performanceMonitor.subscribe((metrics) => {
+      if (!performanceMonitor.isPerformanceGood()) {
+        const recommendations = performanceMonitor.getRecommendations();
+        console.warn('Performance degradation detected:', recommendations);
+        
+        // Auto-adjust animation profile based on performance
+        const currentProfile = animationFactory.getCurrentProfile();
+        if (metrics.fps < 30) {
+          animationFactory.updateProfile({
+            complexity: 'basic',
+            particleCount: Math.max(6, currentProfile.particleCount / 2)
+          });
+        }
+      }
+    });
+
+    return () => {
+      performanceMonitor.stopMonitoring();
+      unsubscribe();
+    };
+  }, []);
+
+  // Responsive layout configuration with performance optimization
   const layoutConfig = useResponsiveValue({
     mobile: {
       panelWidth: '100vw',
@@ -84,13 +114,20 @@ const Index = () => {
     panelPosition: 'side',
   });
 
-  // Dynamic animation configuration
-  const animationConfig = useResponsiveValue({
-    mobile: { intensity: 'subtle', duration: 200, complexity: 'basic' },
-    tablet: { intensity: 'medium', duration: 300, complexity: 'intermediate' },
-    desktop: { intensity: 'strong', duration: 400, complexity: 'advanced' },
-    ultrawide: { intensity: 'immersive', duration: 500, complexity: 'ultra' },
-  }, { intensity: 'medium', duration: 300, complexity: 'intermediate' });
+  // Dynamic animation configuration using factory
+  const animationConfig = useMemo(() => {
+    const deviceCapabilities = animationFactory.getDeviceCapabilities();
+    const currentProfile = animationFactory.getCurrentProfile();
+    
+    return {
+      intensity: currentProfile.complexity === 'basic' ? 'subtle' :
+                currentProfile.complexity === 'intermediate' ? 'medium' :
+                currentProfile.complexity === 'advanced' ? 'strong' : 'immersive',
+      duration: currentProfile.duration,
+      complexity: currentProfile.complexity,
+      particleCount: currentProfile.particleCount
+    };
+  }, []);
 
   // Session state management
   const activePanel = sessionState?.activePanel || 'forge';
@@ -98,16 +135,26 @@ const Index = () => {
   const animationsEnabled = sessionState?.uiState.animationsEnabled ?? true;
   const soundEnabled = sessionState?.uiState.soundEnabled ?? true;
 
-  // Advanced gesture handling
+  // Enhanced gesture handling with state machine
   const gestureHandlers = useMemo(() => ({
     onPan: (state: any) => {
-      if (state.deltaX > 50 && activePanel === 'gallery') {
-        handlePanelChange('forge');
-      } else if (state.deltaX < -50 && activePanel === 'forge') {
-        handlePanelChange('gallery');
+      const gestureStart = performance.now();
+      const newState = gestureStateMachine.transition({ type: 'move', ...state });
+      
+      if (newState === 'pan') {
+        if (state.deltaX > 50 && activePanel === 'gallery') {
+          handlePanelChange('forge');
+        } else if (state.deltaX < -50 && activePanel === 'forge') {
+          handlePanelChange('gallery');
+        }
       }
+      
+      performanceMonitor.recordGestureResponseTime(performance.now() - gestureStart);
     },
     onSwipe: (direction: 'up' | 'down' | 'left' | 'right') => {
+      const gestureStart = performance.now();
+      gestureStateMachine.transition({ type: 'swipe', direction });
+      
       switch (direction) {
         case 'left':
           if (activePanel === 'forge') handlePanelChange('gallery');
@@ -126,40 +173,34 @@ const Index = () => {
           }
           break;
       }
+      
+      performanceMonitor.recordGestureResponseTime(performance.now() - gestureStart);
     },
     onPinch: (state: any) => {
-      if (state.scale > 1.1) {
-        // Zoom in gesture
-        if (canvasRef.current) {
-          motionEngine.animate(canvasRef.current, { scaleX: 1.05, scaleY: 1.05 }, {
-            duration: 200,
-            easing: 'easeOutQuad'
-          });
-        }
-      } else if (state.scale < 0.9) {
-        // Zoom out gesture
-        if (canvasRef.current) {
-          motionEngine.animate(canvasRef.current, { scaleX: 0.95, scaleY: 0.95 }, {
-            duration: 200,
-            easing: 'easeOutQuad'
-          });
-        }
+      gestureStateMachine.transition({ type: 'pinch', scale: state.scale });
+      
+      if (state.scale > 1.1 && canvasRef.current) {
+        const config = animationFactory.createMotionConfig('medium');
+        motionEngine.animate(canvasRef.current, { scaleX: 1.05, scaleY: 1.05 }, config);
+      } else if (state.scale < 0.9 && canvasRef.current) {
+        const config = animationFactory.createMotionConfig('medium');
+        motionEngine.animate(canvasRef.current, { scaleX: 0.95, scaleY: 0.95 }, config);
       }
     },
     onDoubleTap: () => {
+      gestureStateMachine.transition({ type: 'doubletap' });
+      
       if (activePanel === 'forge') {
-        // Quick generation trigger
         console.log('Double tap: Quick generation trigger');
       } else {
-        // Quick image actions
         console.log('Double tap: Quick image actions');
       }
     },
     onLongPress: () => {
-      // Context menu or advanced options
+      gestureStateMachine.transition({ type: 'longpress' });
       console.log('Long press: Context menu');
     },
-  }), [activePanel, viewport, motionEngine]);
+  }), [activePanel, viewport, motionEngine, gestureStateMachine]);
 
   useGestures(mainRef, {
     enablePan: true,
@@ -175,13 +216,11 @@ const Index = () => {
     },
   }, gestureHandlers);
 
-  // Dynamic background effects based on viewport
+  // Dynamic background effects with performance optimization
   const backgroundEffects = useMemo(() => {
     if (!viewport || !animationsEnabled) return [];
     
-    const particleCount = viewport.deviceType === 'mobile' ? 6 : 
-                         viewport.deviceType === 'tablet' ? 12 :
-                         viewport.deviceType === 'ultrawide' ? 24 : 18;
+    const particleCount = animationConfig.particleCount;
     
     return Array.from({ length: particleCount }, (_, i) => ({
       id: i,
@@ -191,27 +230,35 @@ const Index = () => {
       duration: Math.random() * 4 + 2,
       delay: Math.random() * 3,
     }));
-  }, [viewport, animationsEnabled]);
+  }, [viewport, animationsEnabled, animationConfig.particleCount]);
 
-  // Advanced layout transitions
+  // Enhanced layout transitions with performance monitoring
   const handlePanelTransition = useCallback(async (newPanel: 'forge' | 'gallery') => {
     if (!leftPanelRef.current || !animationsEnabled) return;
     
-    const direction = newPanel === 'gallery' ? -1 : 1;
+    const animationStart = performance.now();
+    performanceMonitor.updateAnimationCount(1);
     
-    // Sophisticated panel transition
-    await motionEngine.sequence([
-      {
-        element: leftPanelRef.current,
-        config: { duration: 150, easing: 'easeInQuad' },
-        transform: { translateX: direction * 20, scaleX: 0.98, opacity: 0.7 }
-      },
-      {
-        element: leftPanelRef.current,
-        config: { duration: 200, easing: 'easeOutCubic' },
-        transform: { translateX: 0, scaleX: 1, opacity: 1 }
-      }
-    ]);
+    const direction = newPanel === 'gallery' ? -1 : 1;
+    const config = animationFactory.createMotionConfig('medium');
+    
+    try {
+      await motionEngine.sequence([
+        {
+          element: leftPanelRef.current,
+          config: { ...config, duration: config.duration * 0.5 },
+          transform: { translateX: direction * 20, scaleX: 0.98, opacity: 0.7 }
+        },
+        {
+          element: leftPanelRef.current,
+          config,
+          transform: { translateX: 0, scaleX: 1, opacity: 1 }
+        }
+      ]);
+    } finally {
+      performanceMonitor.updateAnimationCount(0);
+      console.log(`Panel transition completed in ${performance.now() - animationStart}ms`);
+    }
   }, [motionEngine, animationsEnabled]);
 
   // Welcome message with enhanced timing
@@ -241,9 +288,9 @@ const Index = () => {
       updateForgeState({ prompt, ...parameters });
       
       // Enhanced generation with device-specific optimizations
+      const deviceCapabilities = animationFactory.getDeviceCapabilities();
       const optimizedParams = {
         ...parameters,
-        // Adjust quality based on device capabilities
         ...(viewport?.deviceType === 'mobile' && { steps: Math.min(parameters.steps, 25) }),
         ...(viewport?.pixelDensity && viewport.pixelDensity > 2 && { 
           width: parameters.width * 1.5,
@@ -259,23 +306,22 @@ const Index = () => {
       if (generatedImage) {
         setCurrentImage(generatedImage.url);
         
-        // Advanced success animations
         if (animationsEnabled && canvasRef.current) {
+          const config = animationFactory.createMotionConfig('strong');
           await motionEngine.sequence([
             {
               element: canvasRef.current,
-              config: { duration: 100, easing: 'easeOutQuad' },
+              config: { ...config, duration: 100 },
               transform: { scaleX: 1.02, scaleY: 1.02 }
             },
             {
               element: canvasRef.current,
-              config: { duration: 300, easing: 'elasticOut' },
+              config: { ...config, easing: 'elasticOut' },
               transform: { scaleX: 1, scaleY: 1 }
             }
           ]);
         }
         
-        // Audio feedback
         if (soundEnabled && animationsEnabled) {
           console.log('🔊 Playing generation complete harmony');
         }
@@ -285,20 +331,20 @@ const Index = () => {
     } catch (error) {
       console.error('Advanced generation failed:', error);
       
-      // Error state animation
       if (animationsEnabled && leftPanelRef.current) {
+        const config = animationFactory.createMotionConfig('subtle');
         motionEngine.animate(leftPanelRef.current, 
           { translateX: -5, rotateZ: -1 }, 
-          { duration: 100, easing: 'easeInQuad' }
+          { ...config, duration: 100 }
         ).then(() => 
           motionEngine.animate(leftPanelRef.current!, 
             { translateX: 5, rotateZ: 1 }, 
-            { duration: 100, easing: 'easeInQuad' }
+            { ...config, duration: 100 }
           )
         ).then(() =>
           motionEngine.animate(leftPanelRef.current!, 
             { translateX: 0, rotateZ: 0 }, 
-            { duration: 200, easing: 'easeOutCubic' }
+            { ...config, duration: 200 }
           )
         );
       }
@@ -313,6 +359,29 @@ const Index = () => {
   const handleSidebarToggle = (open: boolean) => {
     updateUIState({ sidebarOpen: open });
   };
+
+  // Welcome message with enhanced timing
+  useEffect(() => {
+    if (!sessionLoading && sessionState && viewport) {
+      const now = new Date();
+      const lastSession = sessionState.lastUpdated;
+      const timeDiff = now.getTime() - lastSession.getTime();
+      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff > 0) {
+        const deviceGreeting = viewport.deviceType === 'mobile' ? '📱' :
+                              viewport.deviceType === 'tablet' ? '📋' :
+                              viewport.deviceType === 'ultrawide' ? '🖥️' : '💻';
+        
+        const capabilities = animationFactory.getDeviceCapabilities();
+        
+        toast({
+          title: `${deviceGreeting} Welcome Back, Master Creator`,
+          description: `${daysDiff} day${daysDiff > 1 ? 's' : ''} since your last forging session. Your ${viewport.deviceType} forge awaits (${capabilities.maxAnimations} concurrent animations, ${capabilities.preferredFPS}fps).`,
+        });
+      }
+    }
+  }, [sessionLoading, sessionState, viewport]);
 
   // Loading state with device-specific optimization
   if (sessionLoading) {
@@ -376,7 +445,7 @@ const Index = () => {
           </div>
         )}
         
-        {/* Dynamic particle system */}
+        {/* Performance-optimized particle system */}
         {animationsEnabled && (
           <div className="absolute inset-0 pointer-events-none">
             {backgroundEffects.map((particle) => (
@@ -473,7 +542,7 @@ const Index = () => {
                 </div>
               )}
               
-              {/* Enhanced stats overlay with device context */}
+              {/* Enhanced stats overlay with device context and performance metrics */}
               {stats.totalImages > 0 && (
                 <div className="absolute bottom-4 left-4 z-20">
                   <EnhancedLiquidGlass intensity="subtle" className="px-4 py-2">
@@ -485,6 +554,9 @@ const Index = () => {
                           {viewport.deviceType} • {viewport.width}×{viewport.height}
                         </div>
                       )}
+                      <div className="text-xs opacity-40">
+                        {animationConfig.particleCount} particles • {animationConfig.complexity}
+                      </div>
                     </div>
                   </EnhancedLiquidGlass>
                 </div>
@@ -495,9 +567,10 @@ const Index = () => {
                 <div className="absolute top-4 left-4 z-20">
                   <EnhancedLiquidGlass intensity="subtle" className="px-3 py-2">
                     <div className="text-xs text-white/60 space-y-1">
-                      <div>FPS: {Math.round(60 / (animationConfig.duration / 1000))}</div>
+                      <div>Profile: {animationConfig.complexity}</div>
                       <div>DPR: {viewport.pixelDensity.toFixed(1)}x</div>
                       <div>Ratio: {viewport.ratio.toFixed(2)}</div>
+                      <div>State: {gestureStateMachine.getCurrentState()}</div>
                     </div>
                   </EnhancedLiquidGlass>
                 </div>
