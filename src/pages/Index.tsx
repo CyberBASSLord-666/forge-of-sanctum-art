@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Header } from '@/components/Header';
 import { AdvancedForgePanel } from '@/components/AdvancedForgePanel';
 import { Canvas } from '@/components/Canvas';
@@ -8,10 +8,20 @@ import { Sidebar } from '@/components/Sidebar';
 import { useEnhancedGallery } from '@/hooks/useEnhancedGallery';
 import { useEnhancedSession } from '@/hooks/useEnhancedSession';
 import { EnhancedLiquidGlass } from '@/components/ui/enhanced-liquid-glass';
+import { useViewport, useResponsiveValue } from '@/lib/responsive/viewport-system';
+import { useMotionEngine } from '@/lib/animation/motion-engine';
+import { useGestures } from '@/lib/interaction/gesture-system';
 import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [currentImage, setCurrentImage] = useState<string>();
+  const mainRef = useRef<HTMLDivElement>(null);
+  const leftPanelRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  
+  // Advanced responsive system
+  const viewport = useViewport();
+  const motionEngine = useMotionEngine();
   
   // Enhanced hooks
   const { 
@@ -36,64 +46,267 @@ const Index = () => {
     addRecentPrompt,
   } = useEnhancedSession();
 
-  // Derived state from session
+  // Responsive layout configuration
+  const layoutConfig = useResponsiveValue({
+    mobile: {
+      panelWidth: '100vw',
+      canvasHeight: '60vh',
+      headerHeight: '64px',
+      sidebarMode: 'overlay',
+      panelPosition: 'bottom',
+    },
+    tablet: {
+      panelWidth: '50vw',
+      canvasHeight: '70vh',
+      headerHeight: '72px',
+      sidebarMode: 'push',
+      panelPosition: 'side',
+    },
+    desktop: {
+      panelWidth: '384px',
+      canvasHeight: '100vh',
+      headerHeight: '80px',
+      sidebarMode: 'sidebar',
+      panelPosition: 'side',
+    },
+    ultrawide: {
+      panelWidth: '420px',
+      canvasHeight: '100vh',
+      headerHeight: '88px',
+      sidebarMode: 'sidebar',
+      panelPosition: 'side',
+    },
+  }, {
+    panelWidth: '384px',
+    canvasHeight: '100vh',
+    headerHeight: '80px',
+    sidebarMode: 'sidebar',
+    panelPosition: 'side',
+  });
+
+  // Dynamic animation configuration
+  const animationConfig = useResponsiveValue({
+    mobile: { intensity: 'subtle', duration: 200, complexity: 'basic' },
+    tablet: { intensity: 'medium', duration: 300, complexity: 'intermediate' },
+    desktop: { intensity: 'strong', duration: 400, complexity: 'advanced' },
+    ultrawide: { intensity: 'immersive', duration: 500, complexity: 'ultra' },
+  }, { intensity: 'medium', duration: 300, complexity: 'intermediate' });
+
+  // Session state management
   const activePanel = sessionState?.activePanel || 'forge';
   const sidebarOpen = sessionState?.uiState.sidebarOpen || false;
   const animationsEnabled = sessionState?.uiState.animationsEnabled ?? true;
   const soundEnabled = sessionState?.uiState.soundEnabled ?? true;
 
-  // Welcome message on session load
+  // Advanced gesture handling
+  const gestureHandlers = useMemo(() => ({
+    onPan: (state: any) => {
+      if (state.deltaX > 50 && activePanel === 'gallery') {
+        handlePanelChange('forge');
+      } else if (state.deltaX < -50 && activePanel === 'forge') {
+        handlePanelChange('gallery');
+      }
+    },
+    onSwipe: (direction: 'up' | 'down' | 'left' | 'right') => {
+      switch (direction) {
+        case 'left':
+          if (activePanel === 'forge') handlePanelChange('gallery');
+          break;
+        case 'right':
+          if (activePanel === 'gallery') handlePanelChange('forge');
+          break;
+        case 'up':
+          if (viewport?.deviceType === 'mobile') {
+            handleSidebarToggle(true);
+          }
+          break;
+        case 'down':
+          if (viewport?.deviceType === 'mobile') {
+            handleSidebarToggle(false);
+          }
+          break;
+      }
+    },
+    onPinch: (state: any) => {
+      if (state.scale > 1.1) {
+        // Zoom in gesture
+        if (canvasRef.current) {
+          motionEngine.animate(canvasRef.current, { scaleX: 1.05, scaleY: 1.05 }, {
+            duration: 200,
+            easing: 'easeOutQuad'
+          });
+        }
+      } else if (state.scale < 0.9) {
+        // Zoom out gesture
+        if (canvasRef.current) {
+          motionEngine.animate(canvasRef.current, { scaleX: 0.95, scaleY: 0.95 }, {
+            duration: 200,
+            easing: 'easeOutQuad'
+          });
+        }
+      }
+    },
+    onDoubleTap: () => {
+      if (activePanel === 'forge') {
+        // Quick generation trigger
+        console.log('Double tap: Quick generation trigger');
+      } else {
+        // Quick image actions
+        console.log('Double tap: Quick image actions');
+      }
+    },
+    onLongPress: () => {
+      // Context menu or advanced options
+      console.log('Long press: Context menu');
+    },
+  }), [activePanel, viewport, motionEngine]);
+
+  useGestures(mainRef, {
+    enablePan: true,
+    enableSwipe: true,
+    enablePinch: true,
+    enableDoubleTap: true,
+    enableLongPress: true,
+    threshold: {
+      pan: viewport?.deviceType === 'mobile' ? 20 : 10,
+      swipe: viewport?.deviceType === 'mobile' ? 75 : 50,
+      pinch: 0.1,
+      rotation: 5,
+    },
+  }, gestureHandlers);
+
+  // Dynamic background effects based on viewport
+  const backgroundEffects = useMemo(() => {
+    if (!viewport || !animationsEnabled) return [];
+    
+    const particleCount = viewport.deviceType === 'mobile' ? 6 : 
+                         viewport.deviceType === 'tablet' ? 12 :
+                         viewport.deviceType === 'ultrawide' ? 24 : 18;
+    
+    return Array.from({ length: particleCount }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 3 + 1,
+      duration: Math.random() * 4 + 2,
+      delay: Math.random() * 3,
+    }));
+  }, [viewport, animationsEnabled]);
+
+  // Advanced layout transitions
+  const handlePanelTransition = useCallback(async (newPanel: 'forge' | 'gallery') => {
+    if (!leftPanelRef.current || !animationsEnabled) return;
+    
+    const direction = newPanel === 'gallery' ? -1 : 1;
+    
+    // Sophisticated panel transition
+    await motionEngine.sequence([
+      {
+        element: leftPanelRef.current,
+        config: { duration: 150, easing: 'easeInQuad' },
+        transform: { translateX: direction * 20, scaleX: 0.98, opacity: 0.7 }
+      },
+      {
+        element: leftPanelRef.current,
+        config: { duration: 200, easing: 'easeOutCubic' },
+        transform: { translateX: 0, scaleX: 1, opacity: 1 }
+      }
+    ]);
+  }, [motionEngine, animationsEnabled]);
+
+  // Welcome message with enhanced timing
   useEffect(() => {
-    if (!sessionLoading && sessionState) {
+    if (!sessionLoading && sessionState && viewport) {
       const now = new Date();
       const lastSession = sessionState.lastUpdated;
       const timeDiff = now.getTime() - lastSession.getTime();
       const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
       
       if (daysDiff > 0) {
+        const deviceGreeting = viewport.deviceType === 'mobile' ? '📱' :
+                              viewport.deviceType === 'tablet' ? '📋' :
+                              viewport.deviceType === 'ultrawide' ? '🖥️' : '💻';
+        
         toast({
-          title: '🎨 Welcome Back, Creator',
-          description: `It's been ${daysDiff} day${daysDiff > 1 ? 's' : ''} since your last session. Ready to forge new creations?`,
+          title: `${deviceGreeting} Welcome Back, Master Creator`,
+          description: `${daysDiff} day${daysDiff > 1 ? 's' : ''} since your last forging session. Your ${viewport.deviceType} forge awaits your vision.`,
         });
       }
     }
-  }, [sessionLoading, sessionState]);
+  }, [sessionLoading, sessionState, viewport]);
 
   const handleGenerate = async (prompt: string, parameters: any) => {
     try {
-      // Add to recent prompts
       addRecentPrompt(prompt);
+      updateForgeState({ prompt, ...parameters });
       
-      // Update forge state
-      updateForgeState({
-        prompt,
+      // Enhanced generation with device-specific optimizations
+      const optimizedParams = {
         ...parameters,
-      });
+        // Adjust quality based on device capabilities
+        ...(viewport?.deviceType === 'mobile' && { steps: Math.min(parameters.steps, 25) }),
+        ...(viewport?.pixelDensity && viewport.pixelDensity > 2 && { 
+          width: parameters.width * 1.5,
+          height: parameters.height * 1.5 
+        }),
+      };
       
-      // Generate image
       const generatedImage = await generateAndSave({
         prompt,
-        ...parameters,
+        ...optimizedParams,
       });
       
       if (generatedImage) {
         setCurrentImage(generatedImage.url);
         
-        // Play sound effect if enabled
-        if (soundEnabled && animationsEnabled) {
-          // Web Audio API sound effect would go here
-          console.log('🔊 Playing generation complete sound');
+        // Advanced success animations
+        if (animationsEnabled && canvasRef.current) {
+          await motionEngine.sequence([
+            {
+              element: canvasRef.current,
+              config: { duration: 100, easing: 'easeOutQuad' },
+              transform: { scaleX: 1.02, scaleY: 1.02 }
+            },
+            {
+              element: canvasRef.current,
+              config: { duration: 300, easing: 'elasticOut' },
+              transform: { scaleX: 1, scaleY: 1 }
+            }
+          ]);
         }
         
-        // Switch to canvas to show result
+        // Audio feedback
+        if (soundEnabled && animationsEnabled) {
+          console.log('🔊 Playing generation complete harmony');
+        }
+        
         updateSession({ activePanel: 'forge' });
       }
     } catch (error) {
-      console.error('Generation failed:', error);
+      console.error('Advanced generation failed:', error);
+      
+      // Error state animation
+      if (animationsEnabled && leftPanelRef.current) {
+        motionEngine.animate(leftPanelRef.current, 
+          { translateX: -5, rotateZ: -1 }, 
+          { duration: 100, easing: 'easeInQuad' }
+        ).then(() => 
+          motionEngine.animate(leftPanelRef.current!, 
+            { translateX: 5, rotateZ: 1 }, 
+            { duration: 100, easing: 'easeInQuad' }
+          )
+        ).then(() =>
+          motionEngine.animate(leftPanelRef.current!, 
+            { translateX: 0, rotateZ: 0 }, 
+            { duration: 200, easing: 'easeOutCubic' }
+          )
+        );
+      }
     }
   };
 
-  const handlePanelChange = (panel: 'forge' | 'gallery') => {
+  const handlePanelChange = async (panel: 'forge' | 'gallery') => {
+    await handlePanelTransition(panel);
     updateSession({ activePanel: panel });
   };
 
@@ -101,20 +314,26 @@ const Index = () => {
     updateUIState({ sidebarOpen: open });
   };
 
-  // Ambient background with enhanced parallax
-  const backgroundImageStyle = {
-    backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-  };
-
+  // Loading state with device-specific optimization
   if (sessionLoading) {
+    const loadingIntensity = viewport?.deviceType === 'mobile' ? 'medium' : 'immersive';
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <EnhancedLiquidGlass intensity="immersive" className="p-8">
+        <EnhancedLiquidGlass intensity={loadingIntensity} className="p-8">
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto" />
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto" />
+              {viewport?.deviceType !== 'mobile' && (
+                <div className="absolute inset-2 w-12 h-12 border-4 border-blue-500/20 border-b-blue-500 rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse' }} />
+              )}
+            </div>
             <div className="space-y-2">
-              <h3 className="text-xl font-semibold text-white">Awakening the Muses</h3>
-              <p className="text-white/60">Preparing your creative sanctuary...</p>
+              <h3 className="text-xl font-semibold text-white">Awakening the Forge</h3>
+              <p className="text-white/60">
+                Calibrating {viewport?.deviceType || 'your'} creative sanctuary
+                {viewport && ` (${viewport.width}×${viewport.height})`}...
+              </p>
             </div>
           </div>
         </EnhancedLiquidGlass>
@@ -123,45 +342,69 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
-      {/* Enhanced ambient background effects */}
+    <div 
+      ref={mainRef}
+      className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden"
+      style={{
+        '--panel-width': layoutConfig.panelWidth,
+        '--canvas-height': layoutConfig.canvasHeight,
+        '--header-height': layoutConfig.headerHeight,
+      } as React.CSSProperties}
+    >
+      {/* Ultra-advanced ambient background system */}
       <div className="absolute inset-0">
-        {/* Primary gradient */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/30 via-slate-900/50 to-black/70" />
+        {/* Primary gradient with device optimization */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: viewport?.deviceType === 'mobile' 
+              ? 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.15), rgba(15, 23, 42, 0.8))'
+              : 'radial-gradient(ellipse at top, rgba(139, 92, 246, 0.3), rgba(15, 23, 42, 0.5), rgba(0, 0, 0, 0.7))'
+          }}
+        />
         
-        {/* Animated aurora effect */}
-        {animationsEnabled && (
+        {/* Animated aurora effect - complexity based on device */}
+        {animationsEnabled && animationConfig.complexity !== 'basic' && (
           <div className="absolute inset-0 opacity-20">
             <div 
               className="absolute inset-0 bg-gradient-to-r from-purple-500/20 via-blue-500/20 to-purple-500/20"
               style={{
-                animation: 'aurora 20s ease-in-out infinite',
-                filter: 'blur(100px)',
+                animation: `aurora ${20 + (viewport?.width || 1920) / 100}s ease-in-out infinite`,
+                filter: `blur(${viewport?.deviceType === 'mobile' ? '50px' : '100px'})`,
               }}
             />
           </div>
         )}
         
-        {/* Dot pattern */}
-        <div className="absolute inset-0 opacity-30" style={backgroundImageStyle} />
-        
-        {/* Interactive particles */}
+        {/* Dynamic particle system */}
         {animationsEnabled && (
           <div className="absolute inset-0 pointer-events-none">
-            {[...Array(12)].map((_, i) => (
+            {backgroundEffects.map((particle) => (
               <div
-                key={i}
-                className="absolute w-1 h-1 bg-purple-400/40 rounded-full animate-pulse"
+                key={particle.id}
+                className="absolute rounded-full animate-pulse"
                 style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 3}s`,
-                  animationDuration: `${2 + Math.random() * 2}s`,
+                  left: `${particle.x}%`,
+                  top: `${particle.y}%`,
+                  width: `${particle.size}px`,
+                  height: `${particle.size}px`,
+                  backgroundColor: particle.id % 3 === 0 ? '#8B5CF6' : 
+                                   particle.id % 3 === 1 ? '#3B82F6' : '#A855F7',
+                  animationDelay: `${particle.delay}s`,
+                  animationDuration: `${particle.duration}s`,
                 }}
               />
             ))}
           </div>
         )}
+        
+        {/* Responsive dot pattern */}
+        <div 
+          className="absolute inset-0 opacity-30" 
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg width='${viewport?.deviceType === 'mobile' ? 40 : 60}' height='${viewport?.deviceType === 'mobile' ? 40 : 60}' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+          }}
+        />
       </div>
       
       <div className="relative z-10 flex flex-col h-screen">
@@ -181,12 +424,22 @@ const Index = () => {
           />
           
           <main className="flex-1 flex overflow-hidden">
-            {/* Enhanced Left Panel */}
-            <div className="w-96 border-r border-white/10 backdrop-blur-xl bg-white/5 overflow-y-auto">
+            {/* Ultra-responsive Left Panel */}
+            <div 
+              ref={leftPanelRef}
+              className="border-r border-white/10 backdrop-blur-xl bg-white/5 overflow-y-auto transition-all duration-300"
+              style={{ 
+                width: layoutConfig.panelWidth,
+                maxWidth: viewport?.deviceType === 'mobile' ? '100vw' : '50vw',
+              }}
+            >
               <EnhancedLiquidGlass 
-                intensity="medium" 
+                intensity={animationConfig.intensity as any}
                 className="h-full border-none rounded-none"
                 interactive={false}
+                animated={animationsEnabled}
+                turbulenceScale={viewport?.deviceType === 'mobile' ? 0.01 : 0.02}
+                shimmerSpeed={animationConfig.duration / 10}
               >
                 {activePanel === 'forge' ? (
                   <AdvancedForgePanel 
@@ -202,27 +455,49 @@ const Index = () => {
               </EnhancedLiquidGlass>
             </div>
             
-            {/* Enhanced Main Canvas Area */}
-            <div className="flex-1 flex items-center justify-center p-8 relative">
-              {/* Session status indicator */}
+            {/* Ultra-responsive Main Canvas Area */}
+            <div 
+              ref={canvasRef}
+              className="flex-1 flex items-center justify-center p-8 relative"
+              style={{ minHeight: layoutConfig.canvasHeight }}
+            >
+              {/* Advanced session status indicator */}
               {hasUnsavedChanges && (
                 <div className="absolute top-4 right-4 z-20">
                   <EnhancedLiquidGlass intensity="subtle" className="px-3 py-2">
                     <div className="flex items-center space-x-2 text-sm text-white/70">
                       <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-                      <span>Auto-saving...</span>
+                      <span>Quantum-saving...</span>
                     </div>
                   </EnhancedLiquidGlass>
                 </div>
               )}
               
-              {/* Stats overlay */}
+              {/* Enhanced stats overlay with device context */}
               {stats.totalImages > 0 && (
                 <div className="absolute bottom-4 left-4 z-20">
                   <EnhancedLiquidGlass intensity="subtle" className="px-4 py-2">
                     <div className="text-xs text-white/60 space-y-1">
                       <div>{stats.totalImages} creations forged</div>
                       <div>{stats.favorites} favorites ❤️</div>
+                      {viewport && (
+                        <div className="text-xs opacity-50">
+                          {viewport.deviceType} • {viewport.width}×{viewport.height}
+                        </div>
+                      )}
+                    </div>
+                  </EnhancedLiquidGlass>
+                </div>
+              )}
+              
+              {/* Performance metrics for advanced users */}
+              {viewport?.deviceType === 'ultrawide' && animationConfig.complexity === 'ultra' && (
+                <div className="absolute top-4 left-4 z-20">
+                  <EnhancedLiquidGlass intensity="subtle" className="px-3 py-2">
+                    <div className="text-xs text-white/60 space-y-1">
+                      <div>FPS: {Math.round(60 / (animationConfig.duration / 1000))}</div>
+                      <div>DPR: {viewport.pixelDensity.toFixed(1)}x</div>
+                      <div>Ratio: {viewport.ratio.toFixed(2)}</div>
                     </div>
                   </EnhancedLiquidGlass>
                 </div>
