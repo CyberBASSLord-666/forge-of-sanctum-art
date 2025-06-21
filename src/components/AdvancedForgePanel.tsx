@@ -1,6 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
-import { Wand2 } from 'lucide-react';
+import { Wand2, Wifi, WifiOff } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { LiquidGlass } from '@/components/ui/liquid-glass';
 import { PromptInput } from '@/components/forge/PromptInput';
@@ -23,6 +23,7 @@ export const AdvancedForgePanel = ({ onGenerate, isGenerating }: AdvancedForgePa
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [promptSuggestions, setPromptSuggestions] = useState<string[]>([]);
+  const [isOnline, setIsOnline] = useState(true);
 
   const handleEnhancePrompt = useCallback(async () => {
     if (!prompt.trim()) return;
@@ -38,12 +39,19 @@ export const AdvancedForgePanel = ({ onGenerate, isGenerating }: AdvancedForgePa
       setPrompt(assistance.enhanced);
       setPromptSuggestions(assistance.suggestions || []);
       
+      // Check if this was a fallback response
+      const isFallback = assistance.confidence < 0.8;
+      setIsOnline(!isFallback);
+      
       toast({
-        title: '✨ Prompt Enhanced',
-        description: 'Your creative vision has been amplified',
+        title: isFallback ? '🔧 Prompt Enhanced (Local)' : '✨ Prompt Enhanced',
+        description: isFallback 
+          ? 'Enhanced using local processing - API temporarily unavailable'
+          : 'Your creative vision has been amplified',
       });
     } catch (error) {
       console.error('Prompt enhancement failed:', error);
+      setIsOnline(false);
       toast({
         title: '⚠️ Enhancement Failed',
         description: 'Unable to enhance prompt at this time',
@@ -69,10 +77,20 @@ export const AdvancedForgePanel = ({ onGenerate, isGenerating }: AdvancedForgePa
   return (
     <div className="p-6 space-y-6">
       <div className="space-y-2">
-        <h2 className="text-xl font-semibold text-white flex items-center">
-          <Wand2 className="w-5 h-5 mr-2 text-purple-400" />
-          Digital Forge
-        </h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-white flex items-center">
+            <Wand2 className="w-5 h-5 mr-2 text-purple-400" />
+            Digital Forge
+          </h2>
+          <div className="flex items-center text-xs text-white/60">
+            {isOnline ? (
+              <Wifi className="w-4 h-4 mr-1 text-green-400" />
+            ) : (
+              <WifiOff className="w-4 h-4 mr-1 text-amber-400" />
+            )}
+            {isOnline ? 'Online' : 'Local Mode'}
+          </div>
+        </div>
         <p className="text-sm text-white/60">
           Co-create with AI to manifest your imagination
         </p>

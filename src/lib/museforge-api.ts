@@ -90,6 +90,42 @@ export interface GenerationResult {
   metadata: GenerationMetadata;
 }
 
+// Fallback prompt enhancement when API is unavailable
+const enhancePromptLocally = (input: string, style?: string): AssistanceResponse => {
+  console.log('🔧 Using local prompt enhancement fallback');
+  
+  // Basic enhancement patterns
+  const enhancements = {
+    photorealistic: 'highly detailed, photorealistic, sharp focus, professional photography',
+    artistic: 'artistic style, creative composition, vibrant colors, expressive',
+    fantasy: 'fantasy art, magical atmosphere, epic composition, detailed',
+    sci_fi: 'sci-fi style, futuristic, high-tech, cyberpunk aesthetic',
+    anime: 'anime style, detailed character design, vibrant colors',
+    portrait: 'portrait photography, detailed facial features, professional lighting',
+    landscape: 'landscape photography, wide angle, natural lighting, scenic view'
+  };
+  
+  const styleEnhancement = style && enhancements[style as keyof typeof enhancements] 
+    ? enhancements[style as keyof typeof enhancements] 
+    : 'high quality, detailed';
+  
+  const enhanced = `${input}, ${styleEnhancement}`;
+  
+  const suggestions = [
+    'dramatic lighting',
+    'cinematic composition',
+    'ultra high definition',
+    'masterpiece quality',
+    'award winning'
+  ];
+  
+  return {
+    enhanced,
+    suggestions,
+    confidence: 0.7 // Lower confidence for local enhancement
+  };
+};
+
 class MuseForgeAPI {
   private async request<T>(
     endpoint: string,
@@ -203,13 +239,27 @@ class MuseForgeAPI {
     // Validate parameters client-side
     const validatedParams = AssistRequestSchema.parse(params);
     
-    return this.request<AssistanceResponse>('/api/assist', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(validatedParams),
-    });
+    try {
+      return await this.request<AssistanceResponse>('/api/assist', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(validatedParams),
+      });
+    } catch (error) {
+      console.warn('🔧 API unavailable, using local enhancement fallback:', error);
+      
+      // Use local fallback when API is unavailable
+      if (error instanceof MuseForgeAPIError && error.code === 'NETWORK_ERROR') {
+        return enhancePromptLocally(
+          validatedParams.input, 
+          validatedParams.context?.currentStyle
+        );
+      }
+      
+      throw error;
+    }
   }
 
   async healthCheck(): Promise<{ status: string; version: string; uptime: number }> {
