@@ -62,7 +62,7 @@ export const PromptInput = ({
               key={index}
               variant="outline"
               className="bg-purple-500/10 border-purple-500/30 text-purple-200 cursor-pointer hover:bg-purple-500/20"
-              onClick={() => onPromptChange(prev => `${prev}, ${suggestion.toLowerCase()}`)}
+              onClick={() => onPromptChange(`${prompt}, ${suggestion.toLowerCase()}`)}
             >
               {suggestion}
             </Badge>
