@@ -1,4 +1,3 @@
-
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useState, useCallback } from 'react';
 import { db, galleryManager, sessionManager, type IGalleryItem } from '@/lib/database';
@@ -22,11 +21,18 @@ export const useGallery = () => {
       // Convert blob to data URL for storage
       const imageUrl = URL.createObjectURL(imageBlob);
       
-      // Save to IndexedDB
+      // Save to IndexedDB with required width/height defaults
       const savedImage = await galleryManager.addImage({
         url: imageUrl,
         prompt: params.prompt,
-        parameters: params,
+        parameters: {
+          style: params.style,
+          steps: params.steps,
+          guidance: params.guidance,
+          width: params.width || 512,
+          height: params.height || 512,
+          seed: params.seed,
+        },
         metadata: {
           fileSize: imageBlob.size,
           dimensions: { width: params.width || 512, height: params.height || 512 },

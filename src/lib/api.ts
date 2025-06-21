@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 const API_BASE = import.meta.env.PROD 
@@ -36,6 +35,12 @@ export interface AssistParams {
     currentStyle?: string;
     userLevel?: 'beginner' | 'intermediate' | 'advanced';
   };
+}
+
+export interface AssistanceResponse {
+  enhanced: string;
+  suggestions?: string[];
+  optimizations?: any;
 }
 
 class MuseForgeAPI {
@@ -89,10 +94,10 @@ class MuseForgeAPI {
     return response.blob();
   }
 
-  async getAssistance(params: AssistParams) {
+  async getAssistance(params: AssistParams): Promise<AssistanceResponse> {
     console.log('🤖 Requesting AI assistance:', params);
     
-    return this.request('/api/assist', {
+    return this.request<AssistanceResponse>('/api/assist', {
       method: 'POST',
       body: JSON.stringify(params),
     });
