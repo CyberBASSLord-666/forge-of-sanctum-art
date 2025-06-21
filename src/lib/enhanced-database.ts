@@ -1,4 +1,3 @@
-
 import Dexie, { Table } from 'dexie';
 
 export interface IGalleryItem {
@@ -129,7 +128,7 @@ class MuseForgeEnhancedDB extends Dexie {
       obj.updatedAt = new Date();
     });
 
-    this.gallery_items.hook('updating', function (modifications, primKey, obj, trans) {
+    this.gallery_items.hook('updating', function (modifications: Partial<IGalleryItem>, primKey, obj, trans) {
       modifications.updatedAt = new Date();
     });
 
@@ -138,7 +137,7 @@ class MuseForgeEnhancedDB extends Dexie {
       obj.updatedAt = new Date();
     });
 
-    this.collections.hook('updating', function (modifications, primKey, obj, trans) {
+    this.collections.hook('updating', function (modifications: Partial<ICollection>, primKey, obj, trans) {
       modifications.updatedAt = new Date();
     });
   }
@@ -149,15 +148,37 @@ export const enhancedDB = new MuseForgeEnhancedDB();
 // Export the db as well for compatibility
 export const db = enhancedDB;
 
+// Utility function to truncate prompt if too long
+export const truncatePrompt = (prompt: string, maxLength: number = 1800): string => {
+  if (prompt.length <= maxLength) return prompt;
+  
+  // Try to truncate at a sentence boundary
+  const truncated = prompt.substring(0, maxLength);
+  const lastSentence = truncated.lastIndexOf('. ');
+  const lastComma = truncated.lastIndexOf(', ');
+  
+  if (lastSentence > maxLength * 0.8) {
+    return truncated.substring(0, lastSentence + 1);
+  } else if (lastComma > maxLength * 0.8) {
+    return truncated.substring(0, lastComma + 1);
+  } else {
+    return truncated + '...';
+  }
+};
+
 // Gallery Manager
 export const galleryManager = {
   async addImage(image: Omit<IGalleryItem, 'id' | 'createdAt' | 'updatedAt'>) {
     const id = crypto.randomUUID();
     const now = new Date();
     
+    // Ensure prompt doesn't exceed API limits
+    const truncatedPrompt = truncatePrompt(image.prompt);
+    
     const galleryItem: IGalleryItem = {
       ...image,
       id,
+      prompt: truncatedPrompt,
       createdAt: now,
       updatedAt: now,
     };

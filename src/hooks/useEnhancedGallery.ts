@@ -4,7 +4,8 @@ import { useState, useCallback, useMemo } from 'react';
 import { 
   enhancedDB, 
   galleryManager, 
-  collectionManager, 
+  collectionManager,
+  truncatePrompt,
   type IGalleryItem, 
   type ICollection 
 } from '@/lib/enhanced-database';
@@ -96,8 +97,23 @@ export const useEnhancedGallery = () => {
     try {
       console.log('🎨 Starting enhanced generation process...');
       
+      // Truncate prompt if too long to prevent API errors
+      const truncatedPrompt = truncatePrompt(params.prompt);
+      if (truncatedPrompt !== params.prompt) {
+        console.log('📝 Prompt truncated to prevent API limit exceeded');
+        toast({
+          title: '✂️ Prompt Truncated',
+          description: 'Your prompt was shortened to stay within API limits',
+        });
+      }
+      
+      const truncatedParams = {
+        ...params,
+        prompt: truncatedPrompt,
+      };
+      
       // Call the enhanced API
-      const result = await museForgeAPI.generateImage(params);
+      const result = await museForgeAPI.generateImage(truncatedParams);
       
       // Convert blob to data URL for storage
       const imageUrl = URL.createObjectURL(result.blob);
@@ -105,23 +121,23 @@ export const useEnhancedGallery = () => {
       // Save to IndexedDB with comprehensive metadata
       const savedImage = await galleryManager.addImage({
         url: imageUrl,
-        prompt: params.prompt,
-        negativePrompt: params.negativePrompt,
-        style: params.style,
+        prompt: truncatedParams.prompt,
+        negativePrompt: truncatedParams.negativePrompt,
+        style: truncatedParams.style,
         parameters: {
-          style: params.style,
-          steps: params.steps,
-          guidance: params.guidance,
-          width: params.width || 512,
-          height: params.height || 512,
-          seed: params.seed,
-          strength: params.strength,
+          style: truncatedParams.style,
+          steps: truncatedParams.steps,
+          guidance: truncatedParams.guidance,
+          width: truncatedParams.width || 512,
+          height: truncatedParams.height || 512,
+          seed: truncatedParams.seed,
+          strength: truncatedParams.strength,
         },
         metadata: {
           fileSize: result.blob.size,
           dimensions: { 
-            width: params.width || 512, 
-            height: params.height || 512 
+            width: truncatedParams.width || 512, 
+            height: truncatedParams.height || 512 
           },
           processingTime: result.metadata.processingTime,
           modelUsed: result.metadata.modelUsed,
