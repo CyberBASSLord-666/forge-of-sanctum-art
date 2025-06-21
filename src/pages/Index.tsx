@@ -197,11 +197,6 @@ const Index = () => {
                   <Gallery 
                     images={images}
                     loading={false}
-                    searchQuery={searchQuery}
-                    onSearchChange={setSearchQuery}
-                    selectedFilter={selectedFilter}
-                    onFilterChange={setSelectedFilter}
-                    stats={stats}
                   />
                 )}
               </EnhancedLiquidGlass>
