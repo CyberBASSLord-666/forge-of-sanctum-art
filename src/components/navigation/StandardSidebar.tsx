@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { X, Palette, Image, Home, Settings, Help } from 'lucide-react';
+import { X, Palette, Image, Home, Settings, HelpCircle } from 'lucide-react';
 import { standardAnimations } from '@/lib/animations/standard-animations';
 
 interface StandardSidebarProps {
@@ -100,7 +100,7 @@ export const StandardSidebar: React.FC<StandardSidebarProps> = ({
               variant="ghost"
               className={`w-full justify-start ${standardAnimations.hoverFade}`}
             >
-              <Help className="w-4 h-4 mr-3" />
+              <HelpCircle className="w-4 h-4 mr-3" />
               Help
             </Button>
           </nav>
