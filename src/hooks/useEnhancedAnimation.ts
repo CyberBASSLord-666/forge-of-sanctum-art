@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useCallback } from 'react';
 import { enhancedMotionEngine, EnhancedMotionConfig } from '@/lib/animation/enhanced-motion-engine';
 import { Transform3D, SpringConfig, PhysicsConfig } from '@/lib/animation/motion-types';
@@ -75,6 +74,8 @@ export const useEnhancedAnimation = (options: EnhancedAnimationOptions = {}) => 
     const springConfig = getSpringConfig(stiffness);
     const config: SpringConfig & EnhancedMotionConfig = {
       ...springConfig,
+      duration: getIntensityDuration(intensity),
+      easing: getIntensityEasing(intensity),
       priority: getIntensityPriority(intensity),
       gpuAcceleration: true,
       errorRecovery,
@@ -128,6 +129,8 @@ export const useEnhancedAnimation = (options: EnhancedAnimationOptions = {}) => 
         bottom: viewport?.height || window.innerHeight,
         left: 0,
       },
+      duration: getIntensityDuration(intensity),
+      easing: getIntensityEasing(intensity),
       priority: getIntensityPriority(intensity),
       gpuAcceleration: true,
       errorRecovery,

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Sparkles, Download, Heart, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EnhancedLiquidGlass } from '@/components/ui/enhanced-liquid-glass';
-import { useEnhancedAnimation } from '@/hooks/use-enhanced-animation';
+import { useEnhancedAnimation } from '@/hooks/useEnhancedAnimation';
 
 interface CanvasProps {
   currentImage?: string;
