@@ -1,11 +1,10 @@
-
 import React, { useState, useMemo } from 'react';
 import { Sparkles, Wand2, Palette, Lightbulb } from 'lucide-react';
 import { MuseForgeLiquidGlass } from '@/components/ui/museforge-liquid-glass';
 import { StyleSelector } from './StyleSelector';
 import { PromptInput } from './PromptInput';
 import { GenerateButton } from './GenerateButton';
-import { ResponsiveContainer } from '../layout/ResponsiveContainer';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface GuidedForgeProps {
   onGenerate: (prompt: string, parameters: any) => Promise<void>;
@@ -24,11 +23,6 @@ export const GuidedForge = ({ onGenerate, isGenerating }: GuidedForgeProps) => {
     const styleDescription = getStyleDescription(selectedStyle);
     return `${subject}, ${styleDescription}`;
   }, [subject, selectedStyle]);
-
-  const handleEnhance = () => {
-    // Placeholder for AI enhancement
-    console.log('Enhancing prompt...');
-  };
 
   const getStyleDescription = (style: string) => {
     switch (style) {
@@ -58,8 +52,8 @@ export const GuidedForge = ({ onGenerate, isGenerating }: GuidedForgeProps) => {
   };
 
   return (
-    <ResponsiveContainer maxHeight="calc(100vh - 4rem)" adaptiveSpacing={true}>
-      <div className="space-y-6">
+    <ScrollArea className="h-full">
+      <div className="p-6 space-y-6">
         {/* Header */}
         <MuseForgeLiquidGlass variant="subtle" className="p-4">
           <div className="flex items-center space-x-3">
@@ -81,11 +75,9 @@ export const GuidedForge = ({ onGenerate, isGenerating }: GuidedForgeProps) => {
               <h3 className="font-medium text-mf-text-primary">What do you want to create?</h3>
             </div>
             <PromptInput 
-              prompt={subject}
-              onPromptChange={setSubject}
-              onEnhance={handleEnhance}
-              isEnhancing={false}
-              suggestions={[]}
+              value={subject}
+              onChange={setSubject}
+              placeholder="Describe your main subject or idea..."
             />
           </div>
         </MuseForgeLiquidGlass>
@@ -98,7 +90,7 @@ export const GuidedForge = ({ onGenerate, isGenerating }: GuidedForgeProps) => {
               <h3 className="font-medium text-mf-text-primary">Choose Your Style</h3>
             </div>
             <StyleSelector 
-              style={selectedStyle}
+              selectedStyle={selectedStyle}
               onStyleChange={setSelectedStyle}
             />
           </div>
@@ -124,6 +116,6 @@ export const GuidedForge = ({ onGenerate, isGenerating }: GuidedForgeProps) => {
           disabled={!subject.trim()}
         />
       </div>
-    </ResponsiveContainer>
+    </ScrollArea>
   );
 };
