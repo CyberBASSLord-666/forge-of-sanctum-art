@@ -1,9 +1,9 @@
-
 import React, { useState, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ZoomIn, ZoomOut, RotateCcw, Download, Heart } from 'lucide-react';
-import { standardAnimations, GeometricLoader } from '@/lib/animations/standard-animations';
+import { standardAnimations } from '@/lib/animations/standard-animations';
+import { GeometricLoader } from '@/components/ui/geometric-loader';
 
 interface StandardImageViewerProps {
   currentImage?: string;

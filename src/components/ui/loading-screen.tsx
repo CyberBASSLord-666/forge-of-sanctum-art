@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card } from '@/components/ui/card';
-import { GeometricLoader } from '@/lib/animations/standard-animations';
+import { GeometricLoader } from '@/components/ui/geometric-loader';
 
 interface LoadingScreenProps {
   viewport?: {
