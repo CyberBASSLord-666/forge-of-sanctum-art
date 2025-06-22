@@ -1,6 +1,6 @@
 
-/* MuseForge Design System - Core Implementation */
-/* Based on the definitive blueprint color palette and Liquid Glass material system */
+/* MuseForge Design System - Modern Glassmorphism Implementation */
+/* Based on the definitive blueprint color palette with contemporary glass effects */
 
 :root {
   /* MuseForge Core Color Palette */
@@ -11,11 +11,14 @@
   --mf-text-secondary: rgba(240, 238, 245, 0.7);
   --mf-text-tertiary: rgba(240, 238, 245, 0.5);
   
-  /* Liquid Glass Material Properties */
-  --mf-glass-base: rgba(23, 20, 36, 0.65);
+  /* Modern Glassmorphism Properties */
+  --mf-glass-base: rgba(23, 20, 36, 0.8);
+  --mf-glass-subtle: rgba(23, 20, 36, 0.6);
+  --mf-glass-strong: rgba(23, 20, 36, 0.9);
   --mf-glass-border: rgba(166, 153, 255, 0.2);
-  --mf-glass-blur: 18px;
-  --mf-glass-noise-opacity: 0.02;
+  --mf-glass-border-hover: rgba(166, 153, 255, 0.4);
+  --mf-glass-blur: 16px;
+  --mf-glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   
   /* Typography Scale (1.250 Major Third) */
   --mf-type-xs: 0.64rem;
@@ -32,7 +35,7 @@
   --mf-duration-standard: 300ms;
   --mf-duration-slow: 500ms;
   
-  /* Z-Index Layers for 3D Staging */
+  /* Z-Index Layers */
   --mf-z-background: -100;
   --mf-z-content: 0;
   --mf-z-glass-ui: 10;
@@ -47,61 +50,49 @@ body {
   font-family: 'Inter', system-ui, sans-serif;
   font-feature-settings: 'rlig' 1, 'calt' 1;
   overflow-x: hidden;
-  perspective: 1000px;
-  transform-style: preserve-3d;
 }
 
-/* Core Liquid Glass Material */
-.mf-liquid-glass {
+/* Modern Glassmorphism Base */
+.mf-glass {
   background: var(--mf-glass-base);
   backdrop-filter: blur(var(--mf-glass-blur));
+  -webkit-backdrop-filter: blur(var(--mf-glass-blur));
   border: 1px solid var(--mf-glass-border);
   border-radius: 0.75rem;
-  position: relative;
-  overflow: hidden;
-  transform-style: preserve-3d;
-}
-
-.mf-liquid-glass::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: var(--mf-glass-noise-opacity);
-  pointer-events: none;
-  mix-blend-mode: overlay;
-}
-
-/* Interactive Liquid Glass - responds to cursor */
-.mf-liquid-glass-interactive {
+  box-shadow: var(--mf-glass-shadow);
   transition: all var(--mf-duration-standard) var(--mf-easing-standard);
+}
+
+.mf-glass-subtle {
+  background: var(--mf-glass-subtle);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(166, 153, 255, 0.15);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.mf-glass-strong {
+  background: var(--mf-glass-strong);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(166, 153, 255, 0.3);
+  border-radius: 0.75rem;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Interactive Glassmorphism */
+.mf-glass-interactive {
   cursor: pointer;
+  transition: all var(--mf-duration-standard) var(--mf-easing-standard);
 }
 
-.mf-liquid-glass-interactive:hover {
-  background: rgba(23, 20, 36, 0.8);
-  border-color: rgba(166, 153, 255, 0.4);
-  transform: translateY(-2px) scale(1.02);
+.mf-glass-interactive:hover {
+  border-color: var(--mf-glass-border-hover);
+  transform: translateY(-2px);
   box-shadow: 
-    0 10px 30px rgba(25, 240, 216, 0.1),
-    0 0 40px rgba(166, 153, 255, 0.05);
-}
-
-/* Liquid Glass Variants */
-.mf-liquid-glass--subtle {
-  --mf-glass-base: rgba(23, 20, 36, 0.3);
-  --mf-glass-blur: 8px;
-}
-
-.mf-liquid-glass--strong {
-  --mf-glass-base: rgba(23, 20, 36, 0.8);
-  --mf-glass-blur: 24px;
-}
-
-.mf-liquid-glass--immersive {
-  --mf-glass-base: rgba(23, 20, 36, 0.9);
-  --mf-glass-blur: 32px;
-  --mf-glass-border: rgba(166, 153, 255, 0.4);
+    0 12px 40px rgba(0, 0, 0, 0.25),
+    0 0 20px rgba(25, 240, 216, 0.1);
 }
 
 /* Typography System */
@@ -134,8 +125,7 @@ body {
   font-size: var(--mf-type-base);
   transition: all var(--mf-duration-standard) var(--mf-easing-standard);
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(25, 240, 216, 0.2);
 }
 
 .mf-button-primary:hover {
@@ -154,25 +144,6 @@ body {
   outline: 2px solid var(--mf-primary-accent);
   outline-offset: 2px;
   box-shadow: 0 0 20px rgba(25, 240, 216, 0.4);
-}
-
-/* 3D Staging and Parallax Foundation */
-.mf-stage {
-  transform-style: preserve-3d;
-  perspective: 1000px;
-  transition: transform var(--mf-duration-slow) var(--mf-easing-standard);
-}
-
-.mf-stage--background {
-  transform: translateZ(var(--mf-z-background));
-}
-
-.mf-stage--content {
-  transform: translateZ(var(--mf-z-content));
-}
-
-.mf-stage--ui {
-  transform: translateZ(var(--mf-z-glass-ui));
 }
 
 /* Shimmer Effect for Loading States */
@@ -198,8 +169,8 @@ body {
 }
 
 @keyframes mf-shimmer {
-  0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-  100% { transform: translateX(200%) translateY(200%) rotate(45deg); }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
 }
 
 /* Reduced Motion Support */
