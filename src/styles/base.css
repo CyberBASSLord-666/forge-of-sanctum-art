@@ -1,0 +1,75 @@
+
+/* Base styles and CSS variables */
+@layer base {
+  :root {
+    /* Map MuseForge colors to CSS variables for compatibility */
+    --background: 261 15% 12%; /* #171424 */
+    --foreground: 270 12% 94%; /* #F0EEF5 */
+    --card: 261 15% 12%; /* #171424 */
+    --card-foreground: 270 12% 94%; /* #F0EEF5 */
+    --popover: 261 15% 12%; /* #171424 */
+    --popover-foreground: 270 12% 94%; /* #F0EEF5 */
+    --primary: 178 96% 53%; /* #19F0D8 */
+    --primary-foreground: 261 15% 12%; /* #171424 */
+    --secondary: 256 100% 80%; /* #A699FF */
+    --secondary-foreground: 261 15% 12%; /* #171424 */
+    --muted: 256 100% 80%; /* #A699FF with low opacity */
+    --muted-foreground: 270 12% 70%; /* rgba(240, 238, 245, 0.7) */
+    --accent: 256 100% 80%; /* #A699FF */
+    --accent-foreground: 261 15% 12%; /* #171424 */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 270 12% 94%;
+    --border: 256 100% 80%; /* #A699FF with low opacity */
+    --input: 256 100% 80%; /* #A699FF with low opacity */
+    --ring: 178 96% 53%; /* #19F0D8 */
+    --radius: 0.75rem;
+    --sidebar-background: 261 15% 12%;
+    --sidebar-foreground: 270 12% 94%;
+    --sidebar-primary: 178 96% 53%;
+    --sidebar-primary-foreground: 261 15% 12%;
+    --sidebar-accent: 256 100% 80%;
+    --sidebar-accent-foreground: 261 15% 12%;
+    --sidebar-border: 256 100% 80%;
+    --sidebar-ring: 178 96% 53%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-mf-primary-bg text-mf-text-primary font-sans;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    overflow-x: hidden;
+  }
+
+  /* Enhanced scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(166, 153, 255, 0.3);
+    @apply rounded-full;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(166, 153, 255, 0.5);
+  }
+
+  /* Enhanced selection styling */
+  ::selection {
+    background: rgba(25, 240, 216, 0.3);
+    color: #F0EEF5;
+  }
+
+  ::-moz-selection {
+    background: rgba(25, 240, 216, 0.3);
+    color: #F0EEF5;
+  }
+}
