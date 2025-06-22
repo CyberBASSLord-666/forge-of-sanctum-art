@@ -1,6 +1,7 @@
-
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { sessionManager, type ISessionState } from '@/lib/enhanced-database';
+import { unifiedDB, type ISessionState } from '@/lib/enhanced-database';
+import { errorHandler, ErrorSeverity } from '@/lib/error/error-boundary';
+import { resourceManager } from '@/lib/cleanup/resource-manager';
 import { toast } from '@/hooks/use-toast';
 
 // Default session state
@@ -53,12 +54,24 @@ export const useEnhancedSession = () => {
   const autoSaveTimer = useRef<NodeJS.Timeout>();
   const lastSavedState = useRef<string>();
   
+  // Register auto-save timer for cleanup
+  useEffect(() => {
+    if (autoSaveTimer.current) {
+      resourceManager.registerTimeout(autoSaveTimer.current);
+    }
+    return () => {
+      if (autoSaveTimer.current) {
+        resourceManager.unregisterResource(`timeout-${autoSaveTimer.current}`);
+      }
+    };
+  }, []);
+  
   // Load session on mount
   useEffect(() => {
     const initializeSession = async () => {
       setIsLoading(true);
       try {
-        const savedSession = await sessionManager.loadSession();
+        const savedSession = await unifiedDB.loadSession();
         
         if (savedSession) {
           setSessionState(savedSession);
@@ -77,7 +90,7 @@ export const useEnhancedSession = () => {
           };
           
           setSessionState(newSession);
-          await sessionManager.saveSession(newSession);
+          await unifiedDB.saveSession(newSession);
           lastSavedState.current = JSON.stringify(newSession);
           
           toast({
@@ -86,11 +99,11 @@ export const useEnhancedSession = () => {
           });
         }
       } catch (error) {
-        console.error('Failed to initialize session:', error);
-        toast({
-          title: '⚠️ Session Error',
-          description: 'Could not load session, using defaults',
-          variant: 'destructive',
+        errorHandler.handleError({
+          code: 'SESSION_INIT_FAILED',
+          message: 'Failed to initialize session',
+          severity: ErrorSeverity.HIGH,
+          context: { error },
         });
         
         // Fallback to default state
@@ -108,7 +121,7 @@ export const useEnhancedSession = () => {
     initializeSession();
   }, []);
   
-  // Auto-save mechanism
+  // Auto-save mechanism with error handling
   useEffect(() => {
     if (!sessionState || isLoading) return;
     
@@ -121,32 +134,37 @@ export const useEnhancedSession = () => {
       // Clear existing timer
       if (autoSaveTimer.current) {
         clearTimeout(autoSaveTimer.current);
+        resourceManager.unregisterResource(`timeout-${autoSaveTimer.current}`);
       }
       
       // Set new auto-save timer (debounced)
       autoSaveTimer.current = setTimeout(async () => {
         try {
-          await sessionManager.saveSession(sessionState);
+          await unifiedDB.saveSession(sessionState);
           lastSavedState.current = currentStateString;
           setHasUnsavedChanges(false);
           console.log('🔄 Session auto-saved');
         } catch (error) {
-          console.error('Auto-save failed:', error);
-          toast({
-            title: '⚠️ Auto-save Failed',
-            description: 'Your changes might not be saved',
-            variant: 'destructive',
+          errorHandler.handleError({
+            code: 'AUTO_SAVE_FAILED',
+            message: 'Auto-save failed',
+            severity: ErrorSeverity.MEDIUM,
+            context: { error },
           });
         }
-      }, 2000); // Auto-save after 2 seconds of inactivity
+      }, 2000);
+      
+      resourceManager.registerTimeout(autoSaveTimer.current);
     }
     
     return () => {
       if (autoSaveTimer.current) {
         clearTimeout(autoSaveTimer.current);
+        resourceManager.unregisterResource(`timeout-${autoSaveTimer.current}`);
       }
     };
   }, [sessionState, isLoading]);
+  
   
   const updateSession = useCallback((updates: Partial<ISessionState>) => {
     setSessionState(current => {
@@ -222,7 +240,7 @@ export const useEnhancedSession = () => {
     if (!sessionState) return;
     
     try {
-      await sessionManager.saveSession(sessionState);
+      await unifiedDB.saveSession(sessionState);
       lastSavedState.current = JSON.stringify(sessionState);
       setHasUnsavedChanges(false);
       
@@ -231,18 +249,18 @@ export const useEnhancedSession = () => {
         description: 'Your creative progress has been preserved',
       });
     } catch (error) {
-      console.error('Manual save failed:', error);
-      toast({
-        title: '⚠️ Save Failed',
-        description: 'Could not save session',
-        variant: 'destructive',
+      errorHandler.handleError({
+        code: 'MANUAL_SAVE_FAILED',
+        message: 'Manual save failed',
+        severity: ErrorSeverity.HIGH,
+        context: { error },
       });
     }
   }, [sessionState]);
   
   const clearSession = useCallback(async () => {
     try {
-      await sessionManager.clearSession();
+      await unifiedDB.clearSession();
       
       const newSession: ISessionState = {
         ...DEFAULT_SESSION_STATE,
@@ -270,7 +288,7 @@ export const useEnhancedSession = () => {
   
   const exportSession = useCallback(async () => {
     try {
-      const exportData = await sessionManager.exportSession();
+      const exportData = await unifiedDB.exportSession();
       
       const blob = new Blob([exportData], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -301,10 +319,10 @@ export const useEnhancedSession = () => {
   const importSession = useCallback(async (file: File) => {
     try {
       const text = await file.text();
-      await sessionManager.importSession(text);
+      await unifiedDB.importSession(text);
       
       // Reload session
-      const importedSession = await sessionManager.loadSession();
+      const importedSession = await unifiedDB.loadSession();
       if (importedSession) {
         setSessionState(importedSession);
         lastSavedState.current = JSON.stringify(importedSession);

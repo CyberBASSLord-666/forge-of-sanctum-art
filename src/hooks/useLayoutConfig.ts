@@ -51,8 +51,8 @@ export const useLayoutConfig = () => {
     
     return {
       intensity: currentProfile.complexity === 'basic' ? 'subtle' :
-                currentProfile.complexity === 'intermediate' ? 'medium' :
-                currentProfile.complexity === 'advanced' ? 'strong' : 'immersive',
+                currentProfile.complexity === 'advanced' ? 'medium' :
+                'strong',
       duration: currentProfile.duration,
       complexity: currentProfile.complexity,
       particleCount: currentProfile.particleCount
