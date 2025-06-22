@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,9 +8,6 @@
 
 /* Import MuseForge Design System */
 @import './styles/museforge-design-system.css';
-
-/* Import Responsive Utilities */
-@import './styles/responsive-utilities.css';
 
 @layer base {
   :root {
@@ -88,7 +86,51 @@
 }
 
 @layer components {
-  /* Modern glassmorphism utilities - directly defined */
+  /* Responsive spacing utility */
+  .spacing-responsive {
+    padding: clamp(0.5rem, 2vw, 2rem);
+    margin: clamp(0.25rem, 1vw, 1rem);
+  }
+
+  /* Infinite scrollable areas with custom scrollbars */
+  .infinite-scroll {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(166, 153, 255, 0.3) transparent;
+  }
+
+  .infinite-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .infinite-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+  }
+
+  .infinite-scroll::-webkit-scrollbar-thumb {
+    background: rgba(166, 153, 255, 0.3);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .infinite-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(166, 153, 255, 0.5);
+  }
+
+  .infinite-scroll::-webkit-scrollbar-thumb:active {
+    background: rgba(166, 153, 255, 0.7);
+  }
+
+  /* Container queries for component-level responsiveness */
+  .container-responsive {
+    container-type: inline-size;
+    padding: clamp(0.5rem, 2vw, 1.5rem);
+  }
+
+  /* Modern glassmorphism utilities */
   .glass {
     background: rgba(23, 20, 36, 0.8);
     backdrop-filter: blur(16px);
@@ -133,7 +175,6 @@
   /* Infinite adaptability classes */
   .adaptive-container {
     @apply infinite-scroll container-responsive;
-    container-type: inline-size;
     max-height: 100vh;
     overflow-y: auto;
   }
@@ -180,9 +221,25 @@
   .glow-secondary {
     box-shadow: 0 0 20px rgba(166, 153, 255, 0.4);
   }
+
+  /* Touch-friendly targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem;
+  }
 }
 
 @layer utilities {
+  /* Fluid typography that scales with viewport */
+  .text-fluid-xs { font-size: clamp(0.75rem, 1.5vw, 0.875rem); }
+  .text-fluid-sm { font-size: clamp(0.875rem, 2vw, 1rem); }
+  .text-fluid-base { font-size: clamp(1rem, 2.5vw, 1.125rem); }
+  .text-fluid-lg { font-size: clamp(1.125rem, 3vw, 1.25rem); }
+  .text-fluid-xl { font-size: clamp(1.25rem, 3.5vw, 1.5rem); }
+  .text-fluid-2xl { font-size: clamp(1.5rem, 4vw, 2rem); }
+  .text-fluid-3xl { font-size: clamp(2rem, 5vw, 3rem); }
+
   /* Text gradient utilities */
   .text-gradient {
     background: linear-gradient(135deg, var(--mf-primary-accent), var(--mf-secondary-accent));
@@ -249,7 +306,21 @@
   .interactive:active {
     transform: translateY(0);
   }
+
+  /* Adaptive flex layouts */
+  .flex-adaptive {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+  }
+
+  .flex-adaptive > * {
+    flex: 1 1 clamp(200px, 30vw, 400px);
+  }
 }
+
+/* Import Responsive Utilities after layers are defined */
+@import './styles/responsive-utilities.css';
 
 /* Keyframe animations */
 @keyframes float {
@@ -317,9 +388,9 @@
     transform: none;
   }
   
-  /* Larger touch targets */
-  button, .interactive {
-    min-height: 44px;
-    min-width: 44px;
+  /* Apply touch-target class styles directly */
+  button, .interactive, .touch-target {
+    min-height: 44px !important;
+    min-width: 44px !important;
   }
 }
