@@ -1,8 +1,8 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Sparkles, Download, Heart, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { EnhancedLiquidGlass } from '@/components/ui/enhanced-liquid-glass';
+import { useEnhancedAnimation } from '@/hooks/use-enhanced-animation';
 
 interface CanvasProps {
   currentImage?: string;
@@ -17,13 +17,72 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
+  const { animate, spring, getPerformanceMetrics } = useEnhancedAnimation({
+    intensity: 'medium',
+    respectPerformance: true,
+    autoOptimize: true,
+    errorRecovery: true,
+  });
 
   useEffect(() => {
     setShowForgeAnimation(isGenerating);
-  }, [isGenerating]);
+    
+    // Enhanced entrance animation for new images
+    if (currentImage && !isGenerating && imageRef.current && animationsEnabled) {
+      const imageElement = imageRef.current;
+      
+      // Start with scale and fade
+      imageElement.style.transform = 'scale(0.8) translateZ(0)';
+      imageElement.style.opacity = '0';
+      
+      // Animate to full visibility
+      animate(imageElement, {
+        scaleX: 1,
+        scaleY: 1,
+        translateZ: 0,
+      }).then(() => {
+        // Subtle bounce effect
+        return spring(imageElement, {
+          scaleX: 1.02,
+          scaleY: 1.02,
+        }, 'soft');
+      }).then(() => {
+        return spring(imageElement, {
+          scaleX: 1,
+          scaleY: 1,
+        }, 'soft');
+      }).catch(error => {
+        console.warn('Image entrance animation failed:', error);
+      });
+      
+      // Fade in opacity separately for smooth effect
+      imageElement.style.transition = 'opacity 0.3s ease-out';
+      requestAnimationFrame(() => {
+        imageElement.style.opacity = '1';
+      });
+    }
+  }, [isGenerating, currentImage, animationsEnabled, animate, spring]);
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (!currentImage) return;
+    
+    // Enhanced download button animation
+    const button = document.querySelector('[data-download-button]') as HTMLElement;
+    if (button && animationsEnabled) {
+      try {
+        await animate(button, {
+          scaleX: 0.95,
+          scaleY: 0.95,
+        });
+        await animate(button, {
+          scaleX: 1,
+          scaleY: 1,
+        });
+      } catch (error) {
+        console.warn('Download button animation failed:', error);
+      }
+    }
     
     const link = document.createElement('a');
     link.href = currentImage;
@@ -33,17 +92,57 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
     document.body.removeChild(link);
   };
 
-  const handleZoomIn = () => {
-    setZoom(prev => Math.min(prev * 1.2, 3));
+  const handleZoomIn = async () => {
+    const newZoom = Math.min(zoom * 1.2, 3);
+    setZoom(newZoom);
+    
+    // Enhanced zoom animation
+    if (imageRef.current && animationsEnabled) {
+      try {
+        await spring(imageRef.current, {
+          scaleX: newZoom,
+          scaleY: newZoom,
+        }, 'medium');
+      } catch (error) {
+        console.warn('Zoom in animation failed:', error);
+      }
+    }
   };
 
-  const handleZoomOut = () => {
-    setZoom(prev => Math.max(prev / 1.2, 0.5));
+  const handleZoomOut = async () => {
+    const newZoom = Math.max(zoom / 1.2, 0.5);
+    setZoom(newZoom);
+    
+    // Enhanced zoom animation
+    if (imageRef.current && animationsEnabled) {
+      try {
+        await spring(imageRef.current, {
+          scaleX: newZoom,
+          scaleY: newZoom,
+        }, 'medium');
+      } catch (error) {
+        console.warn('Zoom out animation failed:', error);
+      }
+    }
   };
 
-  const handleResetView = () => {
+  const handleResetView = async () => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
+    
+    // Enhanced reset animation
+    if (imageRef.current && animationsEnabled) {
+      try {
+        await spring(imageRef.current, {
+          scaleX: 1,
+          scaleY: 1,
+          translateX: 0,
+          translateY: 0,
+        }, 'soft');
+      } catch (error) {
+        console.warn('Reset view animation failed:', error);
+      }
+    }
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -90,20 +189,23 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
         >
-          {/* Enhanced Forge Animation */}
+          {/* Enhanced Forge Animation with better performance */}
           {showForgeAnimation && animationsEnabled && (
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="text-center space-y-6">
                 <div className="relative">
-                  {/* Primary spinner */}
-                  <div className="w-20 h-20 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mx-auto" />
+                  {/* Primary spinner with enhanced timing */}
+                  <div className="w-20 h-20 border-4 border-purple-500/20 border-t-purple-500 rounded-full animate-spin mx-auto" 
+                       style={{ animationDuration: '1.5s' }} />
                   
-                  {/* Secondary spinner */}
-                  <div className="absolute inset-2 w-16 h-16 border-4 border-blue-500/20 border-b-blue-500 rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse' }} />
+                  {/* Secondary spinner with physics-based motion */}
+                  <div className="absolute inset-2 w-16 h-16 border-4 border-blue-500/20 border-b-blue-500 rounded-full animate-spin mx-auto" 
+                       style={{ animationDirection: 'reverse', animationDuration: '2s' }} />
                   
-                  {/* Core sparkle */}
+                  {/* Core sparkle with enhanced glow */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Sparkles className="w-8 h-8 text-purple-400 animate-pulse" />
+                    <Sparkles className="w-8 h-8 text-purple-400 animate-pulse" 
+                              style={{ animationDuration: '1s' }} />
                   </div>
                 </div>
                 
@@ -114,9 +216,9 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
                   </p>
                 </div>
                 
-                {/* Enhanced particle effects */}
+                {/* Enhanced particle effects with performance optimization */}
                 <div className="absolute inset-0 pointer-events-none overflow-hidden">
-                  {[...Array(30)].map((_, i) => (
+                  {[...Array(20)].map((_, i) => (
                     <div
                       key={i}
                       className="absolute rounded-full animate-ping"
@@ -128,12 +230,13 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
                         backgroundColor: i % 3 === 0 ? '#8B5CF6' : i % 3 === 1 ? '#3B82F6' : '#A855F7',
                         animationDelay: `${Math.random() * 3}s`,
                         animationDuration: `${1 + Math.random() * 2}s`,
+                        willChange: 'transform, opacity',
                       }}
                     />
                   ))}
                 </div>
                 
-                {/* Progress ripples */}
+                {/* Enhanced progress ripples */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                   {[...Array(3)].map((_, i) => (
                     <div
@@ -144,6 +247,7 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
                         height: `${(i + 1) * 100}px`,
                         animationDelay: `${i * 0.5}s`,
                         animationDuration: '2s',
+                        willChange: 'transform, opacity',
                       }}
                     />
                   ))}
@@ -156,38 +260,40 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
           {currentImage && !isGenerating && (
             <div className="relative w-full h-full group">
               <img
+                ref={imageRef}
                 src={currentImage}
                 alt="Generated masterpiece"
                 className="w-full h-full object-contain transition-transform duration-300"
                 style={{
                   transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
                   cursor: isDragging ? 'grabbing' : 'grab',
+                  willChange: 'transform',
                 }}
                 draggable={false}
               />
               
-              {/* Enhanced Image Controls */}
+              {/* Enhanced Image Controls with better animations */}
               <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-y-2">
                 <EnhancedLiquidGlass intensity="strong" className="p-2">
                   <div className="flex flex-col space-y-2">
                     <Button
                       size="sm"
                       onClick={handleZoomIn}
-                      className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20"
+                      className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transform hover:scale-105 transition-all duration-200"
                     >
                       <ZoomIn className="w-4 h-4" />
                     </Button>
                     <Button
                       size="sm"
                       onClick={handleZoomOut}
-                      className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20"
+                      className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transform hover:scale-105 transition-all duration-200"
                     >
                       <ZoomOut className="w-4 h-4" />
                     </Button>
                     <Button
                       size="sm"
                       onClick={handleResetView}
-                      className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20"
+                      className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transform hover:scale-105 transition-all duration-200"
                     >
                       <RotateCcw className="w-4 h-4" />
                     </Button>
@@ -200,14 +306,15 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
                 <EnhancedLiquidGlass intensity="strong" className="p-3">
                   <div className="flex items-center space-x-3">
                     <Button
+                      data-download-button
                       onClick={handleDownload}
-                      className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20"
+                      className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transform hover:scale-105 transition-all duration-200"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download
                     </Button>
                     <Button
-                      className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20"
+                      className="bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transform hover:scale-105 transition-all duration-200"
                     >
                       <Heart className="w-4 h-4 mr-2" />
                       Favorite
@@ -229,7 +336,7 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
             </div>
           )}
           
-          {/* Enhanced Empty State */}
+          {/* Enhanced Empty State with better animations */}
           {!currentImage && !isGenerating && (
             <div className="flex items-center justify-center h-full text-center">
               <div className="space-y-6 max-w-md">
@@ -237,9 +344,10 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
                   <div className="w-32 h-32 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mx-auto relative overflow-hidden">
                     <Sparkles className="w-16 h-16 text-purple-400" />
                     
-                    {/* Rotating ring */}
+                    {/* Enhanced rotating ring */}
                     {animationsEnabled && (
-                      <div className="absolute inset-0 border-2 border-purple-500/30 rounded-full animate-spin" style={{ animationDuration: '10s' }} />
+                      <div className="absolute inset-0 border-2 border-purple-500/30 rounded-full animate-spin" 
+                           style={{ animationDuration: '10s' }} />
                     )}
                   </div>
                 </div>
@@ -258,7 +366,10 @@ export const Canvas = ({ currentImage, isGenerating, animationsEnabled = true }:
                       <div
                         key={i}
                         className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
-                        style={{ animationDelay: `${i * 0.2}s` }}
+                        style={{ 
+                          animationDelay: `${i * 0.2}s`,
+                          willChange: 'transform',
+                        }}
                       />
                     ))}
                   </div>
