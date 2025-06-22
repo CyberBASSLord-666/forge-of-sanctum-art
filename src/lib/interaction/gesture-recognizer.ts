@@ -1,6 +1,5 @@
-
 import { GestureConfig, GestureState, GestureHandlers } from './gesture-types';
-import { getSwipeDirection, getDistance, getRotation, getDefaultGestureConfig } from './gesture-utils';
+import { getSwipeDirectionFromDeltas, getDistance, getRotation, getDefaultGestureConfig } from './gesture-utils';
 
 export class GestureRecognizer {
   private element: HTMLElement;
@@ -18,7 +17,7 @@ export class GestureRecognizer {
 
   constructor(element: HTMLElement, config: GestureConfig, handlers: GestureHandlers) {
     this.element = element;
-    this.config = { ...getDefaultGestureConfig(), ...config };
+    this.config = { ...getDefaultGestureConfig(), ...config } as Required<GestureConfig>;
     this.handlers = handlers;
     this.attachListeners();
   }
@@ -183,9 +182,11 @@ export class GestureRecognizer {
 
     // Handle swipe gesture
     if (this.config.enableSwipe && distance > this.config.threshold.swipe && duration < 300) {
-      const direction = getSwipeDirection(deltaX, deltaY);
-      const state = this.createGestureState('swipe', []);
-      this.handlers.onSwipe?.(direction, state);
+      const direction = getSwipeDirectionFromDeltas(deltaX, deltaY);
+      if (direction) {
+        const state = this.createGestureState('swipe', []);
+        this.handlers.onSwipe?.(direction, state);
+      }
     }
 
     // Handle tap gesture
@@ -267,6 +268,8 @@ export class GestureRecognizer {
       type,
       isActive: this.isActive,
       startTime: this.startTime,
+      startPosition: this.startPos,
+      currentPosition: this.currentPos,
       deltaX,
       deltaY,
       distance,
@@ -280,7 +283,7 @@ export class GestureRecognizer {
         x: (this.startPos.x + this.currentPos.x) / 2,
         y: (this.startPos.y + this.currentPos.y) / 2,
       },
-      pointers,
+      touches: [],
     };
   }
 

@@ -1,3 +1,4 @@
+
 import { GestureConfig, GestureState, TouchData, GestureCallbacks } from './gesture-types';
 
 export const calculateDistance = (touch1: TouchData, touch2: TouchData): number => {
@@ -65,6 +66,38 @@ export const getSwipeDirection = (
   }
 };
 
+// Overloaded version for backward compatibility
+export const getSwipeDirectionFromDeltas = (
+  deltaX: number,
+  deltaY: number
+): 'up' | 'down' | 'left' | 'right' | null => {
+  return getSwipeDirection({ x: 0, y: 0 }, { x: deltaX, y: deltaY });
+};
+
+export const getDistance = (touch1: any, touch2: any): number => {
+  return calculateDistance(touch1, touch2);
+};
+
+export const getRotation = (touch1: any, touch2: any): number => {
+  return calculateAngle(touch1, touch2);
+};
+
+export const getDefaultGestureConfig = (): GestureConfig => ({
+  enablePan: true,
+  enableSwipe: true,
+  enablePinch: false,
+  enableRotation: false,
+  enableDoubleTap: false,
+  enableLongPress: false,
+  threshold: {
+    pan: 10,
+    swipe: 50,
+    pinch: 0.1,
+    rotation: 5,
+  },
+  preventDefault: true,
+});
+
 export const isWithinThreshold = (
   current: number,
   target: number,
@@ -82,6 +115,7 @@ export const lerp = (start: number, end: number, factor: number): number => {
 };
 
 export const createGestureState = (): GestureState => ({
+  type: 'tap',
   isActive: false,
   startTime: 0,
   startPosition: { x: 0, y: 0 },
@@ -92,6 +126,7 @@ export const createGestureState = (): GestureState => ({
   velocity: { x: 0, y: 0 },
   scale: 1,
   rotation: 0,
+  center: { x: 0, y: 0 },
   touches: [],
 });
 
