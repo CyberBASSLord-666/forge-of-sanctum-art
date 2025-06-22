@@ -11,17 +11,18 @@ import { GestureStateMachine } from '@/lib/interaction/gesture-state-machine';
 import { toast } from '@/hooks/use-toast';
 import { useLayoutConfig } from '@/hooks/useLayoutConfig';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { LoadingScreen } from '@/components/ui/loading-screen';
 
 const Index = () => {
   const [currentImage, setCurrentImage] = useState<string>();
   const mainRef = useRef<HTMLDivElement>(null);
   
-  // Enhanced systems
+  // Enhanced systems - always initialize
   const motionEngine = useMotionEngine();
   const gestureStateMachine = useMemo(() => new GestureStateMachine(), []);
   const { layoutConfig, animationConfig, viewport } = useLayoutConfig();
   
-  // Enhanced hooks
+  // Enhanced hooks - always call
   const { 
     images, 
     isGenerating, 
@@ -39,7 +40,7 @@ const Index = () => {
     addRecentPrompt,
   } = useEnhancedSession();
 
-  // Performance monitoring
+  // Performance monitoring - always initialize
   useEffect(() => {
     performanceMonitor.startMonitoring();
     
@@ -61,11 +62,11 @@ const Index = () => {
     };
   }, []);
 
-  // Session state management
+  // Session state management - always derive values safely
   const activePanel = sessionState?.activePanel || 'forge';
-  const sidebarOpen = sessionState?.uiState.sidebarOpen || false;
-  const animationsEnabled = sessionState?.uiState.animationsEnabled ?? true;
-  const soundEnabled = sessionState?.uiState.soundEnabled ?? true;
+  const sidebarOpen = sessionState?.uiState?.sidebarOpen || false;
+  const animationsEnabled = sessionState?.uiState?.animationsEnabled ?? true;
+  const soundEnabled = sessionState?.uiState?.soundEnabled ?? true;
 
   // Enhanced gesture handling with state machine
   const gestureHandlers = useMemo(() => ({
@@ -133,35 +134,34 @@ const Index = () => {
     },
   }, gestureHandlers);
 
-  // Welcome message with enhanced timing
+  // Welcome message - only run when conditions are met
   useEffect(() => {
-    if (!sessionLoading && sessionState && viewport) {
-      const now = new Date();
-      const lastSession = sessionState.lastUpdated;
-      const timeDiff = now.getTime() - lastSession.getTime();
-      const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    if (sessionLoading || !sessionState || !viewport) return;
+    
+    const now = new Date();
+    const lastSession = sessionState.lastUpdated;
+    const timeDiff = now.getTime() - lastSession.getTime();
+    const daysDiff = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+    
+    if (daysDiff > 0) {
+      const deviceGreeting = viewport.deviceType === 'mobile' ? '📱' :
+                            viewport.deviceType === 'tablet' ? '📋' :
+                            viewport.deviceType === 'ultrawide' ? '🖥️' : '💻';
       
-      if (daysDiff > 0) {
-        const deviceGreeting = viewport.deviceType === 'mobile' ? '📱' :
-                              viewport.deviceType === 'tablet' ? '📋' :
-                              viewport.deviceType === 'ultrawide' ? '🖥️' : '💻';
-        
-        const capabilities = animationFactory.getDeviceCapabilities();
-        
-        toast({
-          title: `${deviceGreeting} Welcome Back, Master Creator`,
-          description: `${daysDiff} day${daysDiff > 1 ? 's' : ''} since your last forging session. Your ${viewport.deviceType} forge awaits (${capabilities.maxAnimations} concurrent animations, ${capabilities.preferredFPS}fps).`,
-        });
-      }
+      const capabilities = animationFactory.getDeviceCapabilities();
+      
+      toast({
+        title: `${deviceGreeting} Welcome Back, Master Creator`,
+        description: `${daysDiff} day${daysDiff > 1 ? 's' : ''} since your last forging session. Your ${viewport.deviceType} forge awaits (${capabilities.maxAnimations} concurrent animations, ${capabilities.preferredFPS}fps).`,
+      });
     }
   }, [sessionLoading, sessionState, viewport]);
 
-  const handleGenerate = async (prompt: string, parameters: any) => {
+  const handleGenerate = useCallback(async (prompt: string, parameters: any) => {
     try {
       addRecentPrompt(prompt);
       updateForgeState({ prompt, ...parameters });
       
-      // Enhanced generation with device-specific optimizations
       const optimizedParams = {
         ...parameters,
         ...(viewport?.deviceType === 'mobile' && { steps: Math.min(parameters.steps, 25) }),
@@ -188,41 +188,19 @@ const Index = () => {
     } catch (error) {
       console.error('Advanced generation failed:', error);
     }
-  };
+  }, [addRecentPrompt, updateForgeState, viewport, generateAndSave, soundEnabled, animationsEnabled, updateSession]);
 
-  const handlePanelChange = async (panel: 'forge' | 'gallery') => {
+  const handlePanelChange = useCallback(async (panel: 'forge' | 'gallery') => {
     updateSession({ activePanel: panel });
-  };
+  }, [updateSession]);
 
-  const handleSidebarToggle = (open: boolean) => {
+  const handleSidebarToggle = useCallback((open: boolean) => {
     updateUIState({ sidebarOpen: open });
-  };
+  }, [updateUIState]);
 
-  // Loading state with device-specific optimization
+  // Show loading screen while session is loading
   if (sessionLoading) {
-    const loadingIntensity = viewport?.deviceType === 'mobile' ? 'medium' : 'immersive';
-    
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <EnhancedLiquidGlass intensity={loadingIntensity} className="p-8">
-          <div className="text-center space-y-4">
-            <div className="relative">
-              <div className="w-16 h-16 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin mx-auto" />
-              {viewport?.deviceType !== 'mobile' && (
-                <div className="absolute inset-2 w-12 h-12 border-4 border-blue-500/20 border-b-blue-500 rounded-full animate-spin mx-auto" style={{ animationDirection: 'reverse' }} />
-              )}
-            </div>
-            <div className="space-y-2">
-              <h3 className="text-xl font-semibold text-white">Awakening the Forge</h3>
-              <p className="text-white/60">
-                Calibrating {viewport?.deviceType || 'your'} creative sanctuary
-                {viewport && ` (${viewport.width}×${viewport.height})`}...
-              </p>
-            </div>
-          </div>
-        </EnhancedLiquidGlass>
-      </div>
-    );
+    return <LoadingScreen viewport={viewport} />;
   }
 
   return (
