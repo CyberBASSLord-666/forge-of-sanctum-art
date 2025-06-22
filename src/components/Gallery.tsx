@@ -4,8 +4,6 @@ import { Search, Download, Trash2, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { AdaptiveGrid } from '@/components/ui/adaptive-grid';
-import { ResponsiveContainer } from '@/components/layout/ResponsiveContainer';
 import { standardAnimations } from '@/lib/animations/standard-animations';
 
 interface GalleryImage {
@@ -40,23 +38,23 @@ export const Gallery = ({ images, loading }: GalleryProps) => {
 
   if (loading) {
     return (
-      <ResponsiveContainer>
+      <div className="p-6">
         <div className="flex items-center justify-center h-32">
           <div className="text-center space-y-4">
             <div className="w-8 h-8 border-2 border-mf-secondary-accent/30 border-t-mf-primary-accent rounded-full animate-spin mx-auto" />
             <p className="text-mf-text-secondary text-sm">Loading gallery...</p>
           </div>
         </div>
-      </ResponsiveContainer>
+      </div>
     );
   }
 
   return (
-    <ResponsiveContainer className="space-y-6">
+    <div className="p-6 space-y-6">
       <div className="space-y-4">
         <div className="flex items-center space-x-2">
           <ImageIcon className="w-5 h-5 text-mf-primary-accent" />
-          <h2 className="text-fluid-xl font-semibold text-mf-text-primary">Gallery</h2>
+          <h2 className="text-xl font-semibold text-mf-text-primary">Gallery</h2>
         </div>
         
         {/* Search */}
@@ -71,27 +69,23 @@ export const Gallery = ({ images, loading }: GalleryProps) => {
         </div>
       </div>
 
-      {/* Infinitely Adaptive Gallery Grid */}
+      {/* Gallery Grid */}
       {filteredImages.length === 0 ? (
         <div className={`text-center py-12 ${standardAnimations.fadeIn}`}>
           <div className="w-16 h-16 glass rounded-full flex items-center justify-center mx-auto mb-4">
             <ImageIcon className="w-8 h-8 text-mf-text-tertiary" />
           </div>
-          <h3 className="text-fluid-lg font-medium text-mf-text-primary mb-2">No images yet</h3>
-          <p className="text-mf-text-secondary text-fluid-sm">
+          <h3 className="text-lg font-medium text-mf-text-primary mb-2">No images yet</h3>
+          <p className="text-mf-text-secondary text-sm">
             {searchQuery ? 'No images match your search.' : 'Start creating to see your images here.'}
           </p>
         </div>
       ) : (
-        <AdaptiveGrid 
-          minItemWidth="240px"
-          gap="clamp(0.75rem, 2vw, 1.5rem)"
-          className="infinite-scroll"
-        >
+        <div className="grid grid-cols-2 gap-4">
           {filteredImages.map((image, index) => (
             <Card
               key={image.id}
-              className={`overflow-hidden cursor-pointer group glass hover:glass-strong transition-all duration-300 touch-target ${standardAnimations.hoverLift} ${standardAnimations.fadeIn}`}
+              className={`overflow-hidden cursor-pointer group glass hover:glass-strong transition-all duration-300 ${standardAnimations.hoverLift} ${standardAnimations.fadeIn}`}
               style={{ animationDelay: `${index * 50}ms` }}
               onClick={() => setSelectedImage(image)}
             >
@@ -101,12 +95,11 @@ export const Gallery = ({ images, loading }: GalleryProps) => {
                     src={image.url}
                     alt={image.prompt}
                     className="w-full h-full object-cover"
-                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-mf-primary-bg/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center space-x-2">
                     <Button
                       size="sm"
-                      className="bg-mf-primary-accent text-mf-primary-bg hover:bg-mf-primary-accent/80 touch-target"
+                      className="bg-mf-primary-accent text-mf-primary-bg hover:bg-mf-primary-accent/80"
                       onClick={(e) => {
                         e.stopPropagation();
                         handleDownload(image);
@@ -117,7 +110,6 @@ export const Gallery = ({ images, loading }: GalleryProps) => {
                     <Button
                       size="sm"
                       variant="destructive"
-                      className="touch-target"
                       onClick={(e) => {
                         e.stopPropagation();
                         // Handle delete
@@ -127,17 +119,17 @@ export const Gallery = ({ images, loading }: GalleryProps) => {
                     </Button>
                   </div>
                 </div>
-                <div className="p-3 spacing-responsive">
-                  <p className="text-fluid-xs text-mf-text-secondary line-clamp-2">{image.prompt}</p>
-                  <p className="text-fluid-xs text-mf-text-tertiary mt-1">
+                <div className="p-3">
+                  <p className="text-xs text-mf-text-secondary line-clamp-2">{image.prompt}</p>
+                  <p className="text-xs text-mf-text-tertiary mt-1">
                     {new Date(image.createdAt).toLocaleDateString()}
                   </p>
                 </div>
               </CardContent>
             </Card>
           ))}
-        </AdaptiveGrid>
+        </div>
       )}
-    </ResponsiveContainer>
+    </div>
   );
 };

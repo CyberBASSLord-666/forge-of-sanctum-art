@@ -5,7 +5,6 @@ import { StandardSidebar } from '@/components/navigation/StandardSidebar';
 import { StandardImageViewer } from '@/components/viewer/StandardImageViewer';
 import { AdvancedForgePanel } from '@/components/AdvancedForgePanel';
 import { Gallery } from '@/components/Gallery';
-import { ResponsiveContainer } from './ResponsiveContainer';
 import { standardAnimations } from '@/lib/animations/standard-animations';
 
 interface StandardLayoutProps {
@@ -47,49 +46,27 @@ export const StandardLayout: React.FC<StandardLayoutProps> = ({
         />
         
         <main className="flex-1 flex overflow-hidden">
-          {/* Infinitely Responsive Left Panel */}
-          <div className={`
-            adaptive-panel
-            w-full sm:w-96 lg:w-80 xl:w-96
-            min-w-[280px] max-w-[50vw]
-            border-r 
-            ${standardAnimations.slideInFromLeft}
-          `} 
-          style={{ borderColor: 'rgba(166, 153, 255, 0.2)' }}>
-            <ResponsiveContainer 
-              maxHeight="calc(100vh - 4rem)"
-              adaptiveSpacing={true}
-            >
-              {activeTab === 'forge' ? (
-                <AdvancedForgePanel 
-                  onGenerate={onGenerate}
-                  isGenerating={isGenerating}
-                />
-              ) : (
-                <Gallery 
-                  images={images}
-                  loading={false}
-                />
-              )}
-            </ResponsiveContainer>
-          </div>
-          
-          {/* Infinitely Responsive Main Content */}
-          <div className={`
-            flex-1 
-            adaptive-content
-            min-w-0
-            ${standardAnimations.fadeIn}
-          `}>
-            <ResponsiveContainer 
-              maxHeight="calc(100vh - 4rem)"
-              adaptiveSpacing={true}
-            >
-              <StandardImageViewer 
-                currentImage={currentImage}
+          {/* Left Panel */}
+          <div className={`w-80 border-r glass overflow-y-auto ${standardAnimations.slideInFromLeft}`} style={{ borderColor: 'rgba(166, 153, 255, 0.2)' }}>
+            {activeTab === 'forge' ? (
+              <AdvancedForgePanel 
+                onGenerate={onGenerate}
                 isGenerating={isGenerating}
               />
-            </ResponsiveContainer>
+            ) : (
+              <Gallery 
+                images={images}
+                loading={false}
+              />
+            )}
+          </div>
+          
+          {/* Main Content */}
+          <div className={`flex-1 p-8 overflow-auto ${standardAnimations.fadeIn}`}>
+            <StandardImageViewer 
+              currentImage={currentImage}
+              isGenerating={isGenerating}
+            />
           </div>
         </main>
       </div>

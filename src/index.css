@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,9 +8,6 @@
 
 /* Import MuseForge Design System */
 @import './styles/museforge-design-system.css';
-
-/* Import Responsive Utilities */
-@import './styles/responsive-utilities.css';
 
 @layer base {
   :root {
@@ -128,27 +126,6 @@
     box-shadow: 
       0 12px 40px rgba(0, 0, 0, 0.25),
       0 0 20px rgba(25, 240, 216, 0.1);
-  }
-
-  /* Infinite adaptability classes */
-  .adaptive-container {
-    @apply infinite-scroll container-responsive;
-    container-type: inline-size;
-    max-height: 100vh;
-    overflow-y: auto;
-  }
-
-  .adaptive-panel {
-    @apply glass spacing-responsive;
-    min-height: fit-content;
-    max-height: 100%;
-    overflow: hidden;
-  }
-
-  .adaptive-content {
-    @apply infinite-scroll;
-    height: 100%;
-    padding: clamp(0.5rem, 2vw, 1.5rem);
   }
 
   /* Enhanced focus styles */
