@@ -23,7 +23,7 @@ interface MainLayoutProps {
   gestureStateMachine: any;
   onPanelChange: (panel: 'forge' | 'gallery') => void;
   onSidebarToggle: (open: boolean) => void;
-  onGenerate: (prompt: string, parameters: any) => void;
+  onGenerate: (prompt: string, parameters: any) => Promise<void>;
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
