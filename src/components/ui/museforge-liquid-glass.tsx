@@ -18,16 +18,16 @@ export const MuseForgeLiquidGlass = ({
   glowColor = '#19F0D8',
 }: MuseForgeLiquidGlassProps) => {
   const variantClasses = {
-    subtle: 'mf-glass-subtle',
-    standard: 'mf-glass',
-    strong: 'mf-glass-strong',
+    subtle: 'glass-subtle',
+    standard: 'glass',
+    strong: 'glass-strong',
   };
 
   return (
     <div 
       className={cn(
         variantClasses[variant],
-        interactive && 'mf-glass-interactive',
+        interactive && 'glass-interactive',
         className
       )}
       style={{
