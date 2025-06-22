@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,48 +9,47 @@
 /* Import MuseForge Design System */
 @import './styles/museforge-design-system.css';
 
-/* Definition of the MuseForge design system */
-
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* Map MuseForge colors to CSS variables for compatibility */
+    --background: 261 15% 12%; /* #171424 */
+    --foreground: 270 12% 94%; /* #F0EEF5 */
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --card: 261 15% 12%; /* #171424 */
+    --card-foreground: 270 12% 94%; /* #F0EEF5 */
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 261 15% 12%; /* #171424 */
+    --popover-foreground: 270 12% 94%; /* #F0EEF5 */
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 178 96% 53%; /* #19F0D8 */
+    --primary-foreground: 261 15% 12%; /* #171424 */
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 256 100% 80%; /* #A699FF */
+    --secondary-foreground: 261 15% 12%; /* #171424 */
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 256 100% 80%; /* #A699FF with low opacity */
+    --muted-foreground: 270 12% 70%; /* rgba(240, 238, 245, 0.7) */
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 256 100% 80%; /* #A699FF */
+    --accent-foreground: 261 15% 12%; /* #171424 */
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 270 12% 94%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 256 100% 80%; /* #A699FF with low opacity */
+    --input: 256 100% 80%; /* #A699FF with low opacity */
+    --ring: 178 96% 53%; /* #19F0D8 */
 
     --radius: 0.75rem;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 261 15% 12%;
+    --sidebar-foreground: 270 12% 94%;
+    --sidebar-primary: 178 96% 53%;
+    --sidebar-primary-foreground: 261 15% 12%;
+    --sidebar-accent: 256 100% 80%;
+    --sidebar-accent-foreground: 261 15% 12%;
+    --sidebar-border: 256 100% 80%;
+    --sidebar-ring: 178 96% 53%;
   }
 }
 
@@ -59,12 +59,12 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    @apply bg-mf-primary-bg text-mf-text-primary font-sans;
     font-feature-settings: 'rlig' 1, 'calt' 1;
-    overflow-x: hidden; /* Prevent horizontal scrolling */
+    overflow-x: hidden;
   }
 
-  /* Enhanced scrollbar for webkit browsers */
+  /* Enhanced scrollbar for webkit browsers with MuseForge colors */
   ::-webkit-scrollbar {
     width: 8px;
   }
@@ -74,36 +74,45 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-purple-500/20 rounded-full;
+    background: rgba(166, 153, 255, 0.3);
+    @apply rounded-full;
     transition: background-color 0.2s ease;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-purple-500/40;
+    background: rgba(166, 153, 255, 0.5);
   }
 
-  /* Enhanced selection styling */
+  /* Enhanced selection styling with MuseForge colors */
   ::selection {
-    @apply bg-purple-500/30 text-purple-100;
+    background: rgba(25, 240, 216, 0.3);
+    color: #F0EEF5;
   }
 
   ::-moz-selection {
-    @apply bg-purple-500/30 text-purple-100;
+    background: rgba(25, 240, 216, 0.3);
+    color: #F0EEF5;
   }
 }
 
 @layer components {
-  /* Enhanced liquid glass effects */
+  /* Enhanced liquid glass effects with MuseForge colors */
   .glass {
-    @apply backdrop-blur-xl bg-white/5 border border-white/10;
+    background: rgba(23, 20, 36, 0.65);
+    @apply backdrop-blur-xl border;
+    border-color: rgba(166, 153, 255, 0.2);
   }
 
   .glass-strong {
-    @apply backdrop-blur-2xl bg-white/10 border border-white/20;
+    background: rgba(23, 20, 36, 0.8);
+    @apply backdrop-blur-2xl border;
+    border-color: rgba(166, 153, 255, 0.4);
   }
 
   .glass-immersive {
-    @apply backdrop-blur-3xl bg-white/15 border border-white/30;
+    background: rgba(23, 20, 36, 0.9);
+    @apply backdrop-blur-3xl border;
+    border-color: rgba(166, 153, 255, 0.6);
   }
 
   /* Enhanced forge animation effects */
@@ -117,56 +126,61 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.2),
+      rgba(25, 240, 216, 0.3),
       transparent
     );
     animation: shimmer 2s infinite;
   }
 
-  /* Enhanced focus styles with glow */
+  /* Enhanced focus styles with glow using MuseForge colors */
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:ring-offset-2 focus:ring-offset-transparent;
+    @apply focus:outline-none;
     transition: all 0.2s ease;
   }
 
   .focus-ring:focus {
+    outline: 2px solid #19F0D8;
+    outline-offset: 2px;
     box-shadow: 
-      0 0 0 2px rgba(139, 92, 246, 0.5),
-      0 0 20px rgba(139, 92, 246, 0.3);
+      0 0 0 2px rgba(25, 240, 216, 0.5),
+      0 0 20px rgba(25, 240, 216, 0.3);
   }
 
-  /* Interactive hover effects */
+  /* Interactive hover effects with MuseForge colors */
   .hover-lift {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
 
   .hover-lift:hover {
     transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+    box-shadow: 0 10px 30px rgba(25, 240, 216, 0.2);
   }
 
-  /* Immersive glow effects */
-  .glow-purple {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  /* Immersive glow effects with MuseForge accent colors */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(25, 240, 216, 0.4);
   }
 
-  .glow-blue {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+  .glow-secondary {
+    box-shadow: 0 0 20px rgba(166, 153, 255, 0.4);
   }
 }
 
 @layer utilities {
-  /* Enhanced text gradient utilities */
+  /* Enhanced text gradient utilities with MuseForge colors */
   .text-gradient {
-    @apply bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent;
+    background: linear-gradient(135deg, #19F0D8, #A699FF);
+    @apply bg-clip-text text-transparent;
   }
 
   .text-gradient-mystic {
-    @apply bg-gradient-to-r from-purple-300 via-blue-300 to-purple-300 bg-clip-text text-transparent;
+    background: linear-gradient(135deg, #A699FF, rgba(240, 238, 245, 0.8), #19F0D8);
+    @apply bg-clip-text text-transparent;
   }
 
   .text-gradient-ethereal {
-    @apply bg-gradient-to-r from-purple-200 via-pink-300 to-blue-200 bg-clip-text text-transparent;
+    background: linear-gradient(135deg, #A699FF, rgba(240, 238, 245, 0.8), #19F0D8);
+    @apply bg-clip-text text-transparent;
   }
 
   /* Enhanced animation utilities */
@@ -183,11 +197,11 @@
   }
 
   .animate-shimmer {
-    animation: shimmer 3s ease-in-out infinite;
+    animation: mf-shimmer 3s ease-in-out infinite;
   }
 
-  .animate-aurora {
-    animation: aurora 20s ease-in-out infinite;
+  .animate-liquid-flow {
+    animation: mf-liquid-flow 20s ease-in-out infinite;
   }
 
   /* Transform utilities */
@@ -197,29 +211,7 @@
     perspective: 1000px;
   }
 
-  /* Enhanced line clamp utilities */
-  .line-clamp-1 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-  }
-
-  .line-clamp-2 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-
-  .line-clamp-3 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-  }
-
-  /* Interactive states */
+  /* Interactive states with MuseForge colors */
   .interactive {
     transition: all 0.2s ease;
     cursor: pointer;
@@ -227,6 +219,7 @@
 
   .interactive:hover {
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(25, 240, 216, 0.2);
   }
 
   .interactive:active {
@@ -253,65 +246,6 @@
   }
 }
 
-@keyframes shimmer {
-  0% { 
-    transform: translateX(-100%) translateY(-100%) rotate(45deg); 
-  }
-  100% { 
-    transform: translateX(200%) translateY(200%) rotate(45deg); 
-  }
-}
-
-@keyframes aurora {
-  0%, 100% {
-    transform: translateX(-50%) translateY(-50%) rotate(0deg);
-    opacity: 0.3;
-  }
-  25% {
-    transform: translateX(-30%) translateY(-60%) rotate(90deg);
-    opacity: 0.5;
-  }
-  50% {
-    transform: translateX(-70%) translateY(-40%) rotate(180deg);
-    opacity: 0.4;
-  }
-  75% {
-    transform: translateX(-40%) translateY(-70%) rotate(270deg);
-    opacity: 0.6;
-  }
-}
-
-@keyframes ripple {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(4);
-    opacity: 0;
-  }
-}
-
-@keyframes particle {
-  0% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-200px) scale(0);
-    opacity: 0;
-  }
-}
-
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 5px rgba(139, 92, 246, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.8);
-  }
-}
-
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -323,7 +257,7 @@
     scroll-behavior: auto !important;
   }
 
-  .animate-aurora,
+  .animate-liquid-flow,
   .animate-shimmer,
   .animate-float,
   .animate-bounce-subtle {
@@ -351,7 +285,8 @@
   .text-gradient,
   .text-gradient-mystic,
   .text-gradient-ethereal {
-    @apply text-white bg-none;
+    background: none !important;
+    color: #F0EEF5 !important;
   }
 }
 
@@ -384,7 +319,7 @@
 
 /* Enhanced focus visible for better accessibility */
 .focus-visible {
-  outline: 2px solid rgba(139, 92, 246, 0.8);
+  outline: 2px solid #19F0D8;
   outline-offset: 2px;
 }
 

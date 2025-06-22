@@ -29,7 +29,7 @@ export const StandardLayout: React.FC<StandardLayoutProps> = ({
   onGenerate,
 }) => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-mf-primary-bg">
       <StandardHeader 
         activeTab={activeTab}
         onTabChange={onTabChange}
@@ -47,7 +47,7 @@ export const StandardLayout: React.FC<StandardLayoutProps> = ({
         
         <main className="flex-1 flex overflow-hidden">
           {/* Left Panel */}
-          <div className={`w-80 border-r bg-white overflow-y-auto ${standardAnimations.slideInFromLeft}`}>
+          <div className={`w-80 border-r glass overflow-y-auto ${standardAnimations.slideInFromLeft}`} style={{ borderColor: 'rgba(166, 153, 255, 0.2)' }}>
             {activeTab === 'forge' ? (
               <AdvancedForgePanel 
                 onGenerate={onGenerate}
