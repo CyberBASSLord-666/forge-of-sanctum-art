@@ -1,76 +1,53 @@
 
 import { useState, useCallback } from 'react';
-import { galleryManager, truncatePrompt } from '@/lib/enhanced-database';
-import { museForgeAPI, type GenerateParams } from '@/lib/museforge-api';
+import { galleryManager } from '@/lib/enhanced-database';
+import { api, type GenerateParams } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 
 export const useImageGeneration = () => {
   const [isGenerating, setIsGenerating] = useState(false);
-  
+
   const generateAndSave = useCallback(async (params: GenerateParams) => {
     setIsGenerating(true);
     try {
-      console.log('🎨 Starting enhanced generation process...');
+      console.log('🎨 Starting generation process...');
       
-      // Truncate prompt if too long to prevent API errors
-      const truncatedPrompt = truncatePrompt(params.prompt);
-      if (truncatedPrompt !== params.prompt) {
-        console.log('📝 Prompt truncated to prevent API limit exceeded');
-        toast({
-          title: '✂️ Prompt Truncated',
-          description: 'Your prompt was shortened to stay within API limits',
-        });
-      }
-      
-      const truncatedParams = {
-        ...params,
-        prompt: truncatedPrompt,
-      };
-      
-      // Call the enhanced API
-      const result = await museForgeAPI.generateImage(truncatedParams);
+      // Call the API
+      const imageBlob = await api.generateImage(params);
       
       // Convert blob to data URL for storage
-      const imageUrl = URL.createObjectURL(result.blob);
+      const imageUrl = URL.createObjectURL(imageBlob);
       
-      // Save to IndexedDB with comprehensive metadata
+      // Save to IndexedDB with required width/height defaults
       const savedImage = await galleryManager.addImage({
         url: imageUrl,
-        prompt: truncatedParams.prompt,
-        negativePrompt: truncatedParams.negativePrompt,
-        style: truncatedParams.style,
+        prompt: params.prompt,
+        negativePrompt: params.negativePrompt,
+        style: params.style,
         parameters: {
-          style: truncatedParams.style,
-          steps: truncatedParams.steps,
-          guidance: truncatedParams.guidance,
-          width: truncatedParams.width || 512,
-          height: truncatedParams.height || 512,
-          seed: truncatedParams.seed,
-          strength: truncatedParams.strength,
+          style: params.style,
+          steps: params.steps,
+          guidance: params.guidance,
+          width: params.width || 512,
+          height: params.height || 512,
+          seed: params.seed,
+          strength: params.strength,
         },
         metadata: {
-          fileSize: result.blob.size,
-          dimensions: { 
-            width: truncatedParams.width || 512, 
-            height: truncatedParams.height || 512 
-          },
-          processingTime: result.metadata.processingTime,
-          modelUsed: result.metadata.modelUsed,
-          cost: result.metadata.cost,
-          tags: [],
+          fileSize: imageBlob.size,
+          dimensions: { width: params.width || 512, height: params.height || 512 },
           isFavorite: false,
-          collections: [],
         },
       });
       
       toast({
-        title: '✨ Creation Forged Successfully',
-        description: `Generated in ${result.metadata.processingTime}ms using ${result.metadata.modelUsed}`,
+        title: '✨ Creation Forged',
+        description: 'Your vision has been brought to life',
       });
       
       return savedImage;
     } catch (error) {
-      console.error('Enhanced generation failed:', error);
+      console.error('Generation failed:', error);
       toast({
         title: '⚠️ Forging Failed',
         description: error instanceof Error ? error.message : 'Unknown error occurred',
@@ -81,7 +58,7 @@ export const useImageGeneration = () => {
       setIsGenerating(false);
     }
   }, []);
-  
+
   return {
     isGenerating,
     generateAndSave,

@@ -1,106 +1,80 @@
-import { z } from 'zod';
-
-const API_BASE = import.meta.env.PROD 
-  ? 'https://museforge-api.your-domain.workers.dev' 
-  : 'http://localhost:8787';
-
-// Generate a session ID for API Shield volumetric abuse detection
-const SESSION_ID = crypto.randomUUID();
-
-export class MuseForgeAPIError extends Error {
-  constructor(
-    message: string,
-    public status?: number,
-    public code?: string
-  ) {
-    super(message);
-    this.name = 'MuseForgeAPIError';
-  }
-}
 
 export interface GenerateParams {
   prompt: string;
+  negativePrompt?: string;
   style: string;
   steps: number;
   guidance: number;
   width?: number;
   height?: number;
   seed?: number;
+  strength?: number;
 }
 
 export interface AssistParams {
-  type: 'prompt-enhance' | 'style-suggest' | 'parameter-optimize';
+  type: 'prompt_enhance' | 'style_suggest' | 'creative_expand';
   input: string;
-  context?: {
-    currentStyle?: string;
-    userLevel?: 'beginner' | 'intermediate' | 'advanced';
-  };
-}
-
-export interface AssistanceResponse {
-  enhanced: string;
-  suggestions?: string[];
-  optimizations?: any;
+  context?: any;
 }
 
 class MuseForgeAPI {
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${API_BASE}${endpoint}`;
-    
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Session-ID': SESSION_ID,
-        ...options.headers,
-      },
-    });
+  private baseUrl: string;
+  private sessionId: string;
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new MuseForgeAPIError(
-        errorData.error || `HTTP ${response.status}`,
-        response.status,
-        errorData.code
-      );
-    }
-
-    return response.json();
+  constructor() {
+    this.baseUrl = '/api';
+    this.sessionId = crypto.randomUUID();
   }
 
   async generateImage(params: GenerateParams): Promise<Blob> {
-    console.log('🎨 Initiating generation:', params);
+    const formData = new FormData();
     
-    const response = await fetch(`${API_BASE}/api/generate`, {
+    const payload = {
+      prompt: params.prompt,
+      negative_prompt: params.negativePrompt || '',
+      style: params.style,
+      steps: params.steps,
+      guidance_scale: params.guidance,
+      width: params.width || 512,
+      height: params.height || 512,
+      seed: params.seed,
+      strength: params.strength,
+    };
+
+    formData.append('payload', JSON.stringify(payload));
+
+    const response = await fetch(`${this.baseUrl}/generate`, {
+      method: 'POST',
+      headers: {
+        'X-Session-ID': this.sessionId,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Generation failed: ${errorText}`);
+    }
+
+    return await response.blob();
+  }
+
+  async getAssistance(params: AssistParams): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/assist`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-Session-ID': SESSION_ID,
+        'X-Session-ID': this.sessionId,
       },
       body: JSON.stringify(params),
     });
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new MuseForgeAPIError(
-        errorData.error || `Generation failed: ${response.status}`,
-        response.status
-      );
+      const errorText = await response.text();
+      throw new Error(`Assistance failed: ${errorText}`);
     }
 
-    return response.blob();
-  }
-
-  async getAssistance(params: AssistParams): Promise<AssistanceResponse> {
-    console.log('🤖 Requesting AI assistance:', params);
-    
-    return this.request<AssistanceResponse>('/api/assist', {
-      method: 'POST',
-      body: JSON.stringify(params),
-    });
+    return await response.json();
   }
 }
 

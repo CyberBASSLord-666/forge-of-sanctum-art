@@ -1,155 +1,110 @@
 export interface PerformanceMetrics {
   fps: number;
-  frameTime: number;
-  droppedFrames: number;
-  memoryUsage: number;
   animationCount: number;
-  gestureResponseTime: number;
+  memoryUsage: number;
+  cpuUsage: number;
+  timestamp: number;
 }
 
-export interface PerformanceThresholds {
-  minFPS: number;
-  maxFrameTime: number;
-  maxMemoryUsage: number;
-  maxAnimationCount: number;
-}
-
-export class PerformanceMonitor {
-  private metrics: PerformanceMetrics;
-  private thresholds: PerformanceThresholds;
-  private frameTimestamps: number[] = [];
+class PerformanceMonitor {
+  private metrics: PerformanceMetrics[] = [];
+  private animationFrameId: number | null = null;
+  private lastFrameTime = 0;
+  private frameCount = 0;
   private isMonitoring = false;
-  private rafId: number | null = null;
-  private observers: ((metrics: PerformanceMetrics) => void)[] = [];
-
-  constructor(thresholds?: Partial<PerformanceThresholds>) {
-    this.metrics = {
-      fps: 60,
-      frameTime: 0,
-      droppedFrames: 0,
-      memoryUsage: 0,
-      animationCount: 0,
-      gestureResponseTime: 0
-    };
-
-    this.thresholds = {
-      minFPS: 30,
-      maxFrameTime: 16.67, // 60 FPS
-      maxMemoryUsage: 100, // MB
-      maxAnimationCount: 10,
-      ...thresholds
-    };
-  }
+  private subscribers: ((metrics: PerformanceMetrics) => void)[] = [];
 
   public startMonitoring(): void {
     if (this.isMonitoring) return;
     
     this.isMonitoring = true;
-    this.monitor();
+    this.lastFrameTime = performance.now();
+    this.frameCount = 0;
+    this.tick();
   }
 
   public stopMonitoring(): void {
     this.isMonitoring = false;
-    if (this.rafId) {
-      cancelAnimationFrame(this.rafId);
-      this.rafId = null;
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
     }
   }
 
-  private monitor = (): void => {
+  private tick = (): void => {
     if (!this.isMonitoring) return;
 
-    const now = performance.now();
-    this.frameTimestamps.push(now);
+    const currentTime = performance.now();
+    this.frameCount++;
 
-    // Keep only last 60 frames for FPS calculation
-    if (this.frameTimestamps.length > 60) {
-      this.frameTimestamps.shift();
+    // Calculate FPS every second
+    if (currentTime - this.lastFrameTime >= 1000) {
+      const fps = Math.round((this.frameCount * 1000) / (currentTime - this.lastFrameTime));
+      
+      const metrics: PerformanceMetrics = {
+        fps,
+        animationCount: 0, // Will be updated externally
+        memoryUsage: this.getMemoryUsage(),
+        cpuUsage: 0, // Approximated
+        timestamp: currentTime,
+      };
+
+      this.metrics.push(metrics);
+      
+      // Keep only last 60 seconds of data
+      if (this.metrics.length > 60) {
+        this.metrics.shift();
+      }
+
+      // Notify subscribers
+      this.subscribers.forEach(callback => callback(metrics));
+
+      this.frameCount = 0;
+      this.lastFrameTime = currentTime;
     }
 
-    this.updateMetrics(now);
-    this.notifyObservers();
-    
-    this.rafId = requestAnimationFrame(this.monitor);
+    this.animationFrameId = requestAnimationFrame(this.tick);
   };
 
-  private updateMetrics(now: number): void {
-    if (this.frameTimestamps.length < 2) return;
-
-    // Calculate FPS
-    const timeSpan = now - this.frameTimestamps[0];
-    this.metrics.fps = Math.round((this.frameTimestamps.length - 1) * 1000 / timeSpan);
-
-    // Calculate frame time
-    const lastFrameTime = this.frameTimestamps[this.frameTimestamps.length - 2];
-    this.metrics.frameTime = now - lastFrameTime;
-
-    // Calculate dropped frames
-    const expectedFrames = Math.round(timeSpan / 16.67);
-    this.metrics.droppedFrames = Math.max(0, expectedFrames - (this.frameTimestamps.length - 1));
-
-    // Memory usage (if available)
+  private getMemoryUsage(): number {
     if ('memory' in performance) {
-      const memory = (performance as any).memory;
-      this.metrics.memoryUsage = memory.usedJSHeapSize / 1048576; // Convert to MB
+      return (performance as any).memory.usedJSHeapSize / 1024 / 1024; // MB
     }
+    return 0;
   }
 
   public updateAnimationCount(count: number): void {
-    this.metrics.animationCount = count;
+    if (this.metrics.length > 0) {
+      this.metrics[this.metrics.length - 1].animationCount = count;
+    }
   }
 
-  public recordGestureResponseTime(time: number): void {
-    this.metrics.gestureResponseTime = time;
+  public recordGestureResponseTime(responseTime: number): void {
+    console.log(`Gesture response time: ${responseTime.toFixed(2)}ms`);
   }
 
-  public getMetrics(): PerformanceMetrics {
-    return { ...this.metrics };
+  public getMetrics(): PerformanceMetrics[] {
+    return [...this.metrics];
   }
 
   public isPerformanceGood(): boolean {
-    return (
-      this.metrics.fps >= this.thresholds.minFPS &&
-      this.metrics.frameTime <= this.thresholds.maxFrameTime &&
-      this.metrics.memoryUsage <= this.thresholds.maxMemoryUsage &&
-      this.metrics.animationCount <= this.thresholds.maxAnimationCount
-    );
+    if (this.metrics.length === 0) return true;
+    
+    const recent = this.metrics.slice(-5); // Last 5 seconds
+    const avgFps = recent.reduce((sum, m) => sum + m.fps, 0) / recent.length;
+    const avgMemory = recent.reduce((sum, m) => sum + m.memoryUsage, 0) / recent.length;
+    
+    return avgFps > 30 && avgMemory < 100; // 30+ FPS and <100MB memory
   }
 
   public subscribe(callback: (metrics: PerformanceMetrics) => void): () => void {
-    this.observers.push(callback);
+    this.subscribers.push(callback);
     return () => {
-      const index = this.observers.indexOf(callback);
+      const index = this.subscribers.indexOf(callback);
       if (index > -1) {
-        this.observers.splice(index, 1);
+        this.subscribers.splice(index, 1);
       }
     };
-  }
-
-  private notifyObservers(): void {
-    this.observers.forEach(callback => callback(this.metrics));
-  }
-
-  public getRecommendations(): string[] {
-    const recommendations: string[] = [];
-
-    if (this.metrics.fps < this.thresholds.minFPS) {
-      recommendations.push('Reduce animation complexity or particle count');
-    }
-
-    if (this.metrics.frameTime > this.thresholds.maxFrameTime) {
-      recommendations.push('Optimize animation calculations or use requestIdleCallback');
-    }
-
-    if (this.metrics.memoryUsage > this.thresholds.maxMemoryUsage) {
-      recommendations.push('Clean up unused animations or reduce memory footprint');
-    }
-
-    if (this.metrics.animationCount > this.thresholds.maxAnimationCount) {
-      recommendations.push('Limit concurrent animations');
-    }
-
-    return recommendations;
   }
 }
 

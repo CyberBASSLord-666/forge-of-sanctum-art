@@ -7,66 +7,63 @@ export const useCollectionManagement = () => {
   const addToCollection = useCallback(async (imageId: string, collectionId: string) => {
     try {
       await galleryManager.addToCollection(imageId, collectionId);
-      const collection = await collectionManager.getCollection(collectionId);
       toast({
         title: '📁 Added to Collection',
-        description: `Added to "${collection?.name}"`,
+        description: 'Image added to collection successfully',
       });
     } catch (error) {
+      console.error('Failed to add to collection:', error);
       toast({
-        title: '⚠️ Collection Update Failed',
-        description: 'Could not add to collection',
+        title: '⚠️ Collection Error',
+        description: 'Could not add image to collection',
         variant: 'destructive',
       });
     }
   }, []);
-  
+
   const removeFromCollection = useCallback(async (imageId: string, collectionId: string) => {
     try {
       await galleryManager.removeFromCollection(imageId, collectionId);
-      const collection = await collectionManager.getCollection(collectionId);
       toast({
         title: '📁 Removed from Collection',
-        description: `Removed from "${collection?.name}"`,
+        description: 'Image removed from collection',
       });
     } catch (error) {
+      console.error('Failed to remove from collection:', error);
       toast({
-        title: '⚠️ Collection Update Failed',
-        description: 'Could not remove from collection',
+        title: '⚠️ Collection Error',
+        description: 'Could not remove image from collection',
         variant: 'destructive',
       });
     }
   }, []);
-  
-  const createCollection = useCallback(async (
-    name: string, 
-    description?: string, 
-    color: string = '#8B5CF6'
-  ) => {
+
+  const createCollection = useCallback(async (name: string, description?: string) => {
     try {
       const collection = await collectionManager.createCollection({
         name,
         description,
-        color,
+        color: '#8B5CF6', // Default purple color
         imageIds: [],
       });
       
       toast({
         title: '📁 Collection Created',
-        description: `"${name}" is ready for your creations`,
+        description: `"${name}" collection created successfully`,
       });
       
       return collection;
     } catch (error) {
+      console.error('Failed to create collection:', error);
       toast({
-        title: '⚠️ Collection Creation Failed',
+        title: '⚠️ Creation Failed',
         description: 'Could not create collection',
         variant: 'destructive',
       });
       throw error;
     }
   }, []);
-  
+
   return {
     addToCollection,
     removeFromCollection,

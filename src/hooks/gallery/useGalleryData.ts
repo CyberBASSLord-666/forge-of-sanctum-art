@@ -1,29 +1,34 @@
 
 import { useLiveQuery } from 'dexie-react-hooks';
-import { useMemo } from 'react';
-import { galleryManager, collectionManager, type IGalleryItem } from '@/lib/enhanced-database';
+import { galleryManager, collectionManager } from '@/lib/enhanced-database';
+import type { IGalleryStats } from '@/lib/database/interfaces';
 
 export const useGalleryData = () => {
-  // Live queries for reactive updates
   const allImages = useLiveQuery(() => galleryManager.getAllImages()) || [];
   const collections = useLiveQuery(() => collectionManager.getAllCollections()) || [];
   
-  // Statistics
-  const stats = useMemo(() => ({
+  const stats: IGalleryStats = {
     totalImages: allImages.length,
     favorites: allImages.filter(img => img.metadata.isFavorite).length,
     totalCollections: collections.length,
-    averageRating: allImages.reduce((sum, img) => sum + (img.metadata.rating || 0), 0) / allImages.length || 0,
-    totalFileSize: allImages.reduce((sum, img) => sum + img.metadata.fileSize, 0),
+    averageProcessingTime: allImages.reduce((acc, img) => 
+      acc + (img.metadata.processingTime || 0), 0) / Math.max(allImages.length, 1),
     mostUsedStyle: allImages.reduce((acc, img) => {
-      acc[img.parameters.style] = (acc[img.parameters.style] || 0) + 1;
+      acc[img.style] = (acc[img.style] || 0) + 1;
       return acc;
     }, {} as Record<string, number>),
-  }), [allImages, collections]);
-  
+  };
+
+  // Convert mostUsedStyle object to the most used style string
+  const mostUsedStyleString = Object.entries(stats.mostUsedStyle as Record<string, number>)
+    .sort(([,a], [,b]) => b - a)[0]?.[0] || 'photorealistic';
+
   return {
     allImages,
     collections,
-    stats,
+    stats: {
+      ...stats,
+      mostUsedStyle: mostUsedStyleString,
+    },
   };
 };

@@ -1,84 +1,72 @@
 
 import { useState, useMemo } from 'react';
-import type { IGalleryItem } from '@/lib/enhanced-database';
+import type { IGalleryItem } from '@/lib/database/interfaces';
 
-interface FilterState {
-  tags?: string[];
-  collections?: string[];
-  isFavorite?: boolean;
-  dateRange?: { from: Date; to: Date };
-}
-
-export const useGalleryFilters = (allImages: IGalleryItem[]) => {
+export const useGalleryFilters = (images: IGalleryItem[]) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<FilterState>({});
-  const [sortBy, setSortBy] = useState<'createdAt' | 'rating' | 'prompt'>('createdAt');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'favorites' | 'recent'>('all');
+  const [sortBy, setSortBy] = useState<'createdAt' | 'updatedAt' | 'prompt'>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  
-  // Filtered and sorted images
+
   const filteredImages = useMemo(() => {
-    let filtered = allImages;
-    
+    let filtered = [...images];
+
     // Apply search filter
-    if (searchQuery) {
+    if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(image => 
-        image.prompt.toLowerCase().includes(query) ||
-        image.negativePrompt?.toLowerCase().includes(query) ||
-        image.metadata.tags?.some(tag => tag.toLowerCase().includes(query))
+      filtered = filtered.filter(img => 
+        img.prompt.toLowerCase().includes(query) ||
+        img.style.toLowerCase().includes(query) ||
+        img.metadata.tags?.some(tag => tag.toLowerCase().includes(query))
       );
     }
-    
-    // Apply additional filters
-    if (selectedFilter.tags?.length) {
-      filtered = filtered.filter(image => 
-        selectedFilter.tags!.some(tag => image.metadata.tags?.includes(tag))
-      );
+
+    // Apply category filter
+    switch (selectedFilter) {
+      case 'favorites':
+        filtered = filtered.filter(img => img.metadata.isFavorite);
+        break;
+      case 'recent':
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        filtered = filtered.filter(img => new Date(img.createdAt) > oneDayAgo);
+        break;
+      default:
+        // 'all' - no additional filtering
+        break;
     }
-    
-    if (selectedFilter.collections?.length) {
-      filtered = filtered.filter(image => 
-        selectedFilter.collections!.some(collection => 
-          image.metadata.collections?.includes(collection)
-        )
-      );
-    }
-    
-    if (selectedFilter.isFavorite !== undefined) {
-      filtered = filtered.filter(image => 
-        image.metadata.isFavorite === selectedFilter.isFavorite
-      );
-    }
-    
-    if (selectedFilter.dateRange) {
-      filtered = filtered.filter(image => 
-        image.createdAt >= selectedFilter.dateRange!.from && 
-        image.createdAt <= selectedFilter.dateRange!.to
-      );
-    }
-    
+
     // Apply sorting
     filtered.sort((a, b) => {
-      let comparison = 0;
-      
+      let aValue: any;
+      let bValue: any;
+
       switch (sortBy) {
         case 'createdAt':
-          comparison = a.createdAt.getTime() - b.createdAt.getTime();
+          aValue = new Date(a.createdAt).getTime();
+          bValue = new Date(b.createdAt).getTime();
           break;
-        case 'rating':
-          comparison = (a.metadata.rating || 0) - (b.metadata.rating || 0);
+        case 'updatedAt':
+          aValue = new Date(a.updatedAt).getTime();
+          bValue = new Date(b.updatedAt).getTime();
           break;
         case 'prompt':
-          comparison = a.prompt.localeCompare(b.prompt);
+          aValue = a.prompt.toLowerCase();
+          bValue = b.prompt.toLowerCase();
           break;
+        default:
+          return 0;
       }
-      
-      return sortOrder === 'asc' ? comparison : -comparison;
+
+      if (sortOrder === 'asc') {
+        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+      } else {
+        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+      }
     });
-    
+
     return filtered;
-  }, [allImages, searchQuery, selectedFilter, sortBy, sortOrder]);
-  
+  }, [images, searchQuery, selectedFilter, sortBy, sortOrder]);
+
   return {
     searchQuery,
     setSearchQuery,

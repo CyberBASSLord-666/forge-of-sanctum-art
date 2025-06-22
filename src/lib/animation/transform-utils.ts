@@ -1,30 +1,11 @@
 
 import { Transform3D } from './motion-types';
 
-export const buildTransformString = (transform: Transform3D): string => {
-  const parts: string[] = [];
-
-  if (transform.perspective) parts.push(`perspective(${transform.perspective}px)`);
-  if (transform.translateX !== undefined) parts.push(`translateX(${transform.translateX}px)`);
-  if (transform.translateY !== undefined) parts.push(`translateY(${transform.translateY}px)`);
-  if (transform.translateZ !== undefined) parts.push(`translateZ(${transform.translateZ}px)`);
-  if (transform.rotateX !== undefined) parts.push(`rotateX(${transform.rotateX}deg)`);
-  if (transform.rotateY !== undefined) parts.push(`rotateY(${transform.rotateY}deg)`);
-  if (transform.rotateZ !== undefined) parts.push(`rotateZ(${transform.rotateZ}deg)`);
-  if (transform.scaleX !== undefined) parts.push(`scaleX(${transform.scaleX})`);
-  if (transform.scaleY !== undefined) parts.push(`scaleY(${transform.scaleY})`);
-  if (transform.scaleZ !== undefined) parts.push(`scaleZ(${transform.scaleZ})`);
-  if (transform.skewX !== undefined) parts.push(`skewX(${transform.skewX}deg)`);
-  if (transform.skewY !== undefined) parts.push(`skewY(${transform.skewY}deg)`);
-
-  return parts.join(' ');
-};
-
 export const getCurrentTransform = (element: HTMLElement): Transform3D => {
-  const computedStyle = getComputedStyle(element);
-  const transform = computedStyle.transform;
+  const style = window.getComputedStyle(element);
+  const matrix = style.transform;
   
-  if (transform === 'none') {
+  if (matrix === 'none') {
     return {
       translateX: 0,
       translateY: 0,
@@ -39,35 +20,8 @@ export const getCurrentTransform = (element: HTMLElement): Transform3D => {
       skewY: 0,
     };
   }
-  
-  return parseTransformMatrix(transform);
-};
 
-export const parseTransformMatrix = (transform: string): Transform3D => {
-  const values = transform.match(/matrix.*\((.+)\)/)?.[1]?.split(', ') || [];
-  
-  if (values.length === 6) {
-    // 2D matrix
-    const [a, b, c, d, e, f] = values.map(Number);
-    return {
-      translateX: e,
-      translateY: f,
-      scaleX: Math.sqrt(a * a + b * b),
-      scaleY: Math.sqrt(c * c + d * d),
-      rotateZ: Math.atan2(b, a) * (180 / Math.PI),
-      translateZ: 0,
-      rotateX: 0,
-      rotateY: 0,
-      scaleZ: 1,
-      skewX: 0,
-      skewY: 0,
-    };
-  } else if (values.length === 16) {
-    // 3D matrix
-    const matrix = values.map(Number);
-    return decompose3DMatrix(matrix);
-  }
-  
+  // Basic fallback - in a real implementation, you'd parse the matrix
   return {
     translateX: 0,
     translateY: 0,
@@ -83,45 +37,70 @@ export const parseTransformMatrix = (transform: string): Transform3D => {
   };
 };
 
-export const decompose3DMatrix = (matrix: number[]): Transform3D => {
-  const [m11, m12, m13, m14, m21, m22, m23, m24, m31, m32, m33, m34, m41, m42, m43, m44] = matrix;
-  
-  // Extract translation
-  const translateX = m41;
-  const translateY = m42;
-  const translateZ = m43;
-  
-  // Extract scale
-  const scaleX = Math.sqrt(m11 * m11 + m12 * m12 + m13 * m13);
-  const scaleY = Math.sqrt(m21 * m21 + m22 * m22 + m23 * m23);
-  const scaleZ = Math.sqrt(m31 * m31 + m32 * m32 + m33 * m33);
-  
-  // Extract rotation (simplified)
-  const rotateX = Math.atan2(m32 / scaleZ, m33 / scaleZ) * (180 / Math.PI);
-  const rotateY = Math.atan2(-m31 / scaleZ, Math.sqrt(m32 * m32 + m33 * m33) / scaleZ) * (180 / Math.PI);
-  const rotateZ = Math.atan2(m21 / scaleY, m11 / scaleX) * (180 / Math.PI);
-  
-  return {
-    translateX,
-    translateY,
-    translateZ,
-    rotateX,
-    rotateY,
-    rotateZ,
-    scaleX,
-    scaleY,
-    scaleZ,
-    skewX: 0, // Simplified
-    skewY: 0, // Simplified
-  };
-};
-
 export const applyTransform = (element: HTMLElement, transform: Transform3D): void => {
   const transformString = buildTransformString(transform);
   element.style.transform = transformString;
-  
-  // Enable hardware acceleration
   element.style.willChange = 'transform';
-  element.style.backfaceVisibility = 'hidden';
-  element.style.perspective = '1000px';
+};
+
+export const buildTransformString = (transform: Transform3D): string => {
+  const parts: string[] = [];
+  
+  if (transform.translateX !== undefined || transform.translateY !== undefined || transform.translateZ !== undefined) {
+    const x = transform.translateX || 0;
+    const y = transform.translateY || 0;
+    const z = transform.translateZ || 0;
+    parts.push(`translate3d(${x}px, ${y}px, ${z}px)`);
+  }
+  
+  if (transform.rotateX !== undefined && transform.rotateX !== 0) {
+    parts.push(`rotateX(${transform.rotateX}deg)`);
+  }
+  
+  if (transform.rotateY !== undefined && transform.rotateY !== 0) {
+    parts.push(`rotateY(${transform.rotateY}deg)`);
+  }
+  
+  if (transform.rotateZ !== undefined && transform.rotateZ !== 0) {
+    parts.push(`rotateZ(${transform.rotateZ}deg)`);
+  }
+  
+  if (transform.scaleX !== undefined || transform.scaleY !== undefined || transform.scaleZ !== undefined) {
+    const x = transform.scaleX ?? 1;
+    const y = transform.scaleY ?? 1;
+    const z = transform.scaleZ ?? 1;
+    parts.push(`scale3d(${x}, ${y}, ${z})`);
+  }
+  
+  if (transform.skewX !== undefined && transform.skewX !== 0) {
+    parts.push(`skewX(${transform.skewX}deg)`);
+  }
+  
+  if (transform.skewY !== undefined && transform.skewY !== 0) {
+    parts.push(`skewY(${transform.skewY}deg)`);
+  }
+  
+  if (transform.perspective !== undefined) {
+    parts.unshift(`perspective(${transform.perspective}px)`);
+  }
+  
+  return parts.join(' ');
+};
+
+export const interpolateTransform = (
+  start: Transform3D,
+  end: Transform3D,
+  progress: number
+): Transform3D => {
+  const result: Transform3D = {};
+  
+  const keys = new Set([...Object.keys(start), ...Object.keys(end)]) as Set<keyof Transform3D>;
+  
+  keys.forEach(key => {
+    const startValue = start[key] || 0;
+    const endValue = end[key] || 0;
+    result[key] = startValue + (endValue - startValue) * progress;
+  });
+  
+  return result;
 };

@@ -1,129 +1,93 @@
 
-import { MotionConfig, Transform3D, SpringConfig, PhysicsConfig } from './motion-engine';
+import { MotionConfig, SpringConfig } from './motion-types';
 
 export interface DeviceCapabilities {
   maxAnimations: number;
   preferredFPS: number;
   supportsHardwareAcceleration: boolean;
-  memoryConstraints: 'low' | 'medium' | 'high';
-  processingPower: 'low' | 'medium' | 'high';
+  deviceType: 'mobile' | 'tablet' | 'desktop' | 'ultrawide';
 }
 
 export interface AnimationProfile {
-  duration: number;
-  easing: string;
-  complexity: 'basic' | 'intermediate' | 'advanced' | 'ultra';
+  complexity: 'basic' | 'medium' | 'advanced';
   particleCount: number;
-  layerCount: number;
+  duration: number;
+  fps: number;
 }
 
-export class AnimationFactory {
-  private static instance: AnimationFactory;
-  private deviceCapabilities: DeviceCapabilities;
-  private currentProfile: AnimationProfile;
+class AnimationFactory {
+  private profile: AnimationProfile;
+  private capabilities: DeviceCapabilities;
 
-  private constructor() {
-    this.deviceCapabilities = this.detectDeviceCapabilities();
-    this.currentProfile = this.createOptimalProfile();
-  }
-
-  public static getInstance(): AnimationFactory {
-    if (!AnimationFactory.instance) {
-      AnimationFactory.instance = new AnimationFactory();
-    }
-    return AnimationFactory.instance;
+  constructor() {
+    this.capabilities = this.detectDeviceCapabilities();
+    this.profile = this.createDefaultProfile();
   }
 
   private detectDeviceCapabilities(): DeviceCapabilities {
-    const canvas = document.createElement('canvas');
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobile = /mobile|android|ios/.test(userAgent);
+    const isTablet = /tablet|ipad/.test(userAgent);
     
-    // Memory estimation based on device characteristics
-    const memory = (navigator as any).deviceMemory || 4;
-    const cores = navigator.hardwareConcurrency || 4;
-    const pixelRatio = window.devicePixelRatio || 1;
-    
+    const deviceType = isMobile ? 'mobile' : 
+                      isTablet ? 'tablet' :
+                      window.innerWidth > 2560 ? 'ultrawide' : 'desktop';
+
     return {
-      maxAnimations: cores * 2,
-      preferredFPS: pixelRatio > 2 ? 60 : 30,
-      supportsHardwareAcceleration: !!gl,
-      memoryConstraints: memory < 4 ? 'low' : memory < 8 ? 'medium' : 'high',
-      processingPower: cores < 4 ? 'low' : cores < 8 ? 'medium' : 'high'
+      maxAnimations: deviceType === 'mobile' ? 3 : deviceType === 'tablet' ? 5 : 8,
+      preferredFPS: deviceType === 'mobile' ? 30 : 60,
+      supportsHardwareAcceleration: 'CSS' in window && 'supports' in (window as any).CSS,
+      deviceType,
     };
   }
 
-  private createOptimalProfile(): AnimationProfile {
-    const { memoryConstraints, processingPower } = this.deviceCapabilities;
+  private createDefaultProfile(): AnimationProfile {
+    const { deviceType } = this.capabilities;
     
-    if (memoryConstraints === 'low' || processingPower === 'low') {
-      return {
-        duration: 200,
-        easing: 'easeOutQuad',
-        complexity: 'basic',
-        particleCount: 6,
-        layerCount: 2
-      };
+    switch (deviceType) {
+      case 'mobile':
+        return { complexity: 'basic', particleCount: 8, duration: 300, fps: 30 };
+      case 'tablet':
+        return { complexity: 'medium', particleCount: 16, duration: 400, fps: 45 };
+      default:
+        return { complexity: 'advanced', particleCount: 24, duration: 500, fps: 60 };
     }
-    
-    if (memoryConstraints === 'medium' || processingPower === 'medium') {
-      return {
-        duration: 300,
-        easing: 'easeOutCubic',
-        complexity: 'intermediate',
-        particleCount: 12,
-        layerCount: 3
-      };
-    }
-    
-    return {
-      duration: 400,
-      easing: 'elasticOut',
-      complexity: 'advanced',
-      particleCount: 24,
-      layerCount: 4
-    };
   }
 
   public createMotionConfig(intensity: 'subtle' | 'medium' | 'strong' | 'immersive'): MotionConfig {
-    const baseConfig = this.currentProfile;
+    const baseDuration = this.profile.duration;
     
-    const intensityMultipliers = {
-      subtle: 0.7,
-      medium: 1.0,
-      strong: 1.3,
-      immersive: 1.6
+    const configs = {
+      subtle: { duration: baseDuration * 0.7, easing: 'easeOutQuad' },
+      medium: { duration: baseDuration, easing: 'easeOutCubic' },
+      strong: { duration: baseDuration * 1.3, easing: 'easeOutQuart' },
+      immersive: { duration: baseDuration * 1.6, easing: 'easeOutElastic' },
     };
-    
-    const multiplier = intensityMultipliers[intensity];
-    
-    return {
-      duration: baseConfig.duration * multiplier,
-      easing: baseConfig.easing,
-      fillMode: 'forwards'
-    };
+
+    return configs[intensity];
   }
 
   public createSpringConfig(stiffness: 'soft' | 'medium' | 'stiff'): SpringConfig {
     const configs = {
       soft: { tension: 120, friction: 14, mass: 1, velocity: 0, precision: 0.01 },
       medium: { tension: 180, friction: 12, mass: 1, velocity: 0, precision: 0.01 },
-      stiff: { tension: 300, friction: 10, mass: 1, velocity: 0, precision: 0.01 }
+      stiff: { tension: 300, friction: 10, mass: 1, velocity: 0, precision: 0.01 },
     };
-    
+
     return configs[stiffness];
   }
 
   public getDeviceCapabilities(): DeviceCapabilities {
-    return { ...this.deviceCapabilities };
+    return this.capabilities;
   }
 
   public getCurrentProfile(): AnimationProfile {
-    return { ...this.currentProfile };
+    return this.profile;
   }
 
-  public updateProfile(overrides: Partial<AnimationProfile>): void {
-    this.currentProfile = { ...this.currentProfile, ...overrides };
+  public updateProfile(updates: Partial<AnimationProfile>): void {
+    this.profile = { ...this.profile, ...updates };
   }
 }
 
-export const animationFactory = AnimationFactory.getInstance();
+export const animationFactory = new AnimationFactory();
