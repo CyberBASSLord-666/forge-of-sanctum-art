@@ -9,10 +9,388 @@
 /* Import MuseForge Design System */
 @import './styles/museforge-design-system.css';
 
-/* Import modular styles */
-@import './styles/base.css';
-@import './styles/components.css';
-@import './styles/utilities.css';
-@import './styles/animations.css';
-@import './styles/accessibility.css';
+@layer base {
+  :root {
+    /* Map MuseForge colors to CSS variables for compatibility */
+    --background: 261 15% 12%; /* #171424 */
+    --foreground: 270 12% 94%; /* #F0EEF5 */
+    --card: 261 15% 12%; /* #171424 */
+    --card-foreground: 270 12% 94%; /* #F0EEF5 */
+    --popover: 261 15% 12%; /* #171424 */
+    --popover-foreground: 270 12% 94%; /* #F0EEF5 */
+    --primary: 178 96% 53%; /* #19F0D8 */
+    --primary-foreground: 261 15% 12%; /* #171424 */
+    --secondary: 256 100% 80%; /* #A699FF */
+    --secondary-foreground: 261 15% 12%; /* #171424 */
+    --muted: 256 100% 80%; /* #A699FF with low opacity */
+    --muted-foreground: 270 12% 70%; /* rgba(240, 238, 245, 0.7) */
+    --accent: 256 100% 80%; /* #A699FF */
+    --accent-foreground: 261 15% 12%; /* #171424 */
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 270 12% 94%;
+    --border: 256 100% 80%; /* #A699FF with low opacity */
+    --input: 256 100% 80%; /* #A699FF with low opacity */
+    --ring: 178 96% 53%; /* #19F0D8 */
+    --radius: 0.75rem;
+    --sidebar-background: 261 15% 12%;
+    --sidebar-foreground: 270 12% 94%;
+    --sidebar-primary: 178 96% 53%;
+    --sidebar-primary-foreground: 261 15% 12%;
+    --sidebar-accent: 256 100% 80%;
+    --sidebar-accent-foreground: 261 15% 12%;
+    --sidebar-border: 256 100% 80%;
+    --sidebar-ring: 178 96% 53%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-mf-primary-bg text-mf-text-primary font-sans;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+    overflow-x: hidden;
+  }
+
+  /* Enhanced scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgba(166, 153, 255, 0.3);
+    @apply rounded-full;
+    transition: background-color 0.2s ease;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(166, 153, 255, 0.5);
+  }
+
+  /* Enhanced selection styling */
+  ::selection {
+    background: rgba(25, 240, 216, 0.3);
+    color: #F0EEF5;
+  }
+
+  ::-moz-selection {
+    background: rgba(25, 240, 216, 0.3);
+    color: #F0EEF5;
+  }
+}
+
+@layer components {
+  /* Responsive spacing utility */
+  .spacing-responsive {
+    padding: clamp(0.5rem, 2vw, 2rem);
+    margin: clamp(0.25rem, 1vw, 1rem);
+  }
+
+  /* Infinite scrollable areas with custom scrollbars */
+  .infinite-scroll {
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(166, 153, 255, 0.3) transparent;
+  }
+
+  .infinite-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .infinite-scroll::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 4px;
+  }
+
+  .infinite-scroll::-webkit-scrollbar-thumb {
+    background: rgba(166, 153, 255, 0.3);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+  }
+
+  .infinite-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(166, 153, 255, 0.5);
+  }
+
+  .infinite-scroll::-webkit-scrollbar-thumb:active {
+    background: rgba(166, 153, 255, 0.7);
+  }
+
+  /* Container queries for component-level responsiveness */
+  .container-responsive {
+    container-type: inline-size;
+    padding: clamp(0.5rem, 2vw, 1.5rem);
+  }
+
+  /* Modern glassmorphism utilities */
+  .glass {
+    background: rgba(23, 20, 36, 0.8);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(166, 153, 255, 0.2);
+    border-radius: 0.75rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-subtle {
+    background: rgba(23, 20, 36, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(166, 153, 255, 0.15);
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .glass-strong {
+    background: rgba(23, 20, 36, 0.9);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(166, 153, 255, 0.3);
+    border-radius: 0.75rem;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .glass-interactive {
+    cursor: pointer;
+    transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .glass-interactive:hover {
+    border-color: rgba(166, 153, 255, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 
+      0 12px 40px rgba(0, 0, 0, 0.25),
+      0 0 20px rgba(25, 240, 216, 0.1);
+  }
+
+  /* Infinite adaptability classes */
+  .adaptive-container {
+    @apply infinite-scroll container-responsive;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+
+  .adaptive-panel {
+    @apply glass spacing-responsive;
+    min-height: fit-content;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  .adaptive-content {
+    @apply infinite-scroll;
+    height: 100%;
+    padding: clamp(0.5rem, 2vw, 1.5rem);
+  }
+
+  /* Enhanced focus styles */
+  .focus-ring {
+    @apply focus:outline-none;
+  }
+
+  .focus-ring:focus-visible {
+    outline: 2px solid var(--mf-primary-accent);
+    outline-offset: 2px;
+    box-shadow: 0 0 20px rgba(25, 240, 216, 0.4);
+  }
+
+  /* Interactive hover effects */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(25, 240, 216, 0.15);
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(25, 240, 216, 0.4);
+  }
+
+  .glow-secondary {
+    box-shadow: 0 0 20px rgba(166, 153, 255, 0.4);
+  }
+
+  /* Touch-friendly targets */
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0.75rem;
+  }
+}
+
+@layer utilities {
+  /* Fluid typography that scales with viewport */
+  .text-fluid-xs { font-size: clamp(0.75rem, 1.5vw, 0.875rem); }
+  .text-fluid-sm { font-size: clamp(0.875rem, 2vw, 1rem); }
+  .text-fluid-base { font-size: clamp(1rem, 2.5vw, 1.125rem); }
+  .text-fluid-lg { font-size: clamp(1.125rem, 3vw, 1.25rem); }
+  .text-fluid-xl { font-size: clamp(1.25rem, 3.5vw, 1.5rem); }
+  .text-fluid-2xl { font-size: clamp(1.5rem, 4vw, 2rem); }
+  .text-fluid-3xl { font-size: clamp(2rem, 5vw, 3rem); }
+
+  /* Text gradient utilities */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--mf-primary-accent), var(--mf-secondary-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-ethereal {
+    background: linear-gradient(135deg, 
+      var(--mf-secondary-accent), 
+      rgba(240, 238, 245, 0.8), 
+      var(--mf-primary-accent)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Animation utilities */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .animate-shimmer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(25, 240, 216, 0.2),
+      transparent
+    );
+    animation: shimmer 2s infinite;
+  }
+
+  /* Transform utilities */
+  .transform-gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+  }
+
+  /* Interactive states */
+  .interactive {
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .interactive:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(25, 240, 216, 0.2);
+  }
+
+  .interactive:active {
+    transform: translateY(0);
+  }
+
+  /* Adaptive flex layouts */
+  .flex-adaptive {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(0.5rem, 2vw, 1.5rem);
+  }
+
+  .flex-adaptive > * {
+    flex: 1 1 clamp(200px, 30vw, 400px);
+  }
+}
+
+/* Import Responsive Utilities after layers are defined */
 @import './styles/responsive-utilities.css';
+
+/* Keyframe animations */
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-10px); 
+  }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-shimmer,
+  .animate-float {
+    animation: none !important;
+  }
+
+  .animate-shimmer::after {
+    animation: none !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .glass,
+  .glass-subtle,
+  .glass-strong {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.9) !important;
+  }
+  
+  .text-gradient,
+  .text-gradient-ethereal {
+    background: none !important;
+    color: #F0EEF5 !important;
+  }
+}
+
+/* Dark mode enhancements */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+/* Touch device optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .hover-lift:hover,
+  .interactive:hover {
+    transform: none;
+  }
+  
+  /* Apply touch-target class styles directly */
+  button, .interactive, .touch-target {
+    min-height: 44px !important;
+    min-width: 44px !important;
+  }
+}
